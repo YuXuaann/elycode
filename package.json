@@ -1,0 +1,65 @@
+{
+	"name": "elycode",
+	"displayName": "elycode",
+	"version": "1.0.0",
+	"description": "a plugin for code competition",
+	"license": "MIT",
+	"publisher": "yuxuaan",
+	"author": "yuxuaan",
+	"type": "commonjs",
+	"main": "./out/extension.js",
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.elycode",
+				"title": "elycode"
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "elycode",
+					"title": "elycode",
+					"icon": "media/icon.svg"
+				}
+			]
+		},
+		"views": {
+			"elycode": [
+				{
+					"id": "menu",
+					"name": "",
+					"icon": "media/icon.svg",
+					"contextualTitle": "Package Explorer"
+				}
+			]
+		},
+		"viewsWelcome": [
+			{
+				"view": "menu",
+				"contents": "No competition found.\n[Add Competition](command:extension.elycode)"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint",
+		"watch": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.13.0",
+		"@stylistic/eslint-plugin": "^2.9.0",
+		"@types/node": "^22",
+		"@types/vscode": "^1.100.0",
+		"eslint": "^9.13.0",
+		"typescript": "^5.8.2",
+		"typescript-eslint": "^8.26.0"
+	}
+}
