@@ -6,6 +6,9 @@
 			"ES2024",
 			"DOM"
 		],
+		"types": [
+			"node"
+		],
 		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,

@@ -1,44 +1,15 @@
 import * as vscode from 'vscode';
-import * as contest from './contest';
+import * as cmd from './cmd';
+import * as tree from './treeView';
+import * as consts from './const';
 
-export class Provider implements vscode.TreeDataProvider<contest.Question> {
-	constructor(
-		private readonly workspaceRoot: string,
-		private readonly contestRawURL: string,
-	) { }
-
-	getTreeItem(element: contest.Question): vscode.TreeItem {
-		return element;
-	}
-
-	getChildren(element?: contest.Question): vscode.ProviderResult<contest.Question[]> {
-		if (!this.workspaceRoot) {
-			return [];
-		}
-
-		if (!element) {
-			return [
-				new contest.Question('id0', 'Problem', [], vscode.TreeItemCollapsibleState.Expanded),
-			];
-		}
-
-		return [];
-	}
-}
-
-export function activate(context: vscode.ExtensionContext) {
+export function activate(_: vscode.ExtensionContext) {
 	console.log('elycode is now active!');
+	const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 
-	const disposables: vscode.Disposable[] = [];
+	vscode.commands.registerCommand(consts.CMD_HELLO, cmd.elycodeHello);
+	vscode.commands.registerCommand(consts.CMD_OPEN_WORKSPACE, cmd.openWorkspace);
 
-	const elycodeMessage = vscode.commands.registerCommand('extension.elycode', () => {
-		vscode.window.showInformationMessage('elycode works normally');
-	});
-	disposables.push(elycodeMessage);
-
-	const provider = new Provider(vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '', '');
-	const treeView = vscode.window.registerTreeDataProvider('elycode.sidebarView', provider);
-	disposables.push(treeView);
-
-	context.subscriptions.push(...disposables);
+	const provider = new tree.Provider(root, '');
+	vscode.window.registerTreeDataProvider(consts.CMD_SIDEBAR_VIEW, provider);
 }

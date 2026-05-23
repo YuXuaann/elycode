@@ -17,8 +17,12 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.elycode",
+				"command": "elycode.hello",
 				"title": "elycode"
+			},
+			{
+				"command": "elycode.openWorkspace",
+				"title": "Open Workspace"
 			}
 		],
 		"viewsContainers": {
@@ -44,7 +48,7 @@
 		"viewsWelcome": [
 			{
 				"view": "elycode.sidebarView",
-				"contents": "Please open a workspace first.\n[Open Workspace](command:extension.openWorkspace)"
+				"contents": "Please open a workspace first.\n[Open Workspace](command:elycode.openWorkspace)"
 			}
 		]
 	},
@@ -57,7 +61,7 @@
 	"devDependencies": {
 		"@eslint/js": "^9.13.0",
 		"@stylistic/eslint-plugin": "^2.9.0",
-		"@types/node": "^22",
+		"@types/node": "^22.19.19",
 		"@types/vscode": "^1.100.0",
 		"eslint": "^9.13.0",
 		"typescript": "^5.8.2",

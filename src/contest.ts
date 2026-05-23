@@ -1,5 +1,6 @@
 import * as cf from './codeforces';
 import * as vscode from 'vscode';
+import * as consts from './const';
 
 // todo: export type ContestPlatform = 'Codeforces' | 'AtCoder' | 'LeetCode' | 'HackerRank' | 'CodeChef' | undefined;
 export type ContestPlatform = 'Codeforces' | undefined; // for now, we only support Codeforces
@@ -22,19 +23,38 @@ export class Question extends vscode.TreeItem {
         public id: string,
         public title: string,
         public examples: Example[],
-        public collapsibleState: vscode.TreeItemCollapsibleState
+        public collapsibleState: vscode.TreeItemCollapsibleState,
+        icon?: string
     ) {
         super(title, collapsibleState);
         this.id = id;
         this.title = title;
         this.examples = examples;
         this.contextValue = 'question';
+        if (icon) {
+            this.iconPath = new vscode.ThemeIcon(icon);
+        }
     }
 }
 
+export class Commit {
+    timestamp: Date | undefined;
+    code: string | undefined;
+    result: string | undefined;
+}
+
+export class Record {
+    meta: Meta | undefined;
+    questions: Question[] | undefined;
+    lastHistoryCommit: Commit[] | undefined;
+}
+
 export interface Contest {
-    meta(): Meta;
-    questions(): Question[];
+    meta: Meta;
+    questions: Question[];
+    record: Record;
+
+    save(savePath: string): void;
 }
 
 export async function parse(rawURL: string): Promise<Contest | undefined> {
@@ -43,8 +63,8 @@ export async function parse(rawURL: string): Promise<Contest | undefined> {
         ? new URL(normalized)
         : new URL(`https://${normalized}`);
 
-    if (cf.CODEFORCES_HOSTS.has(url.hostname)) {
-        return await cf.CodeforcesContest.new(url.pathname);
+    if (consts.CODEFORCES_HOSTS.has(url.hostname)) {
+        return await cf.Codeforces.new(url.pathname);
     }
 
     return undefined;
