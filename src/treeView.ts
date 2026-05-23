@@ -1,24 +1,26 @@
 import * as vscode from 'vscode';
-import * as contest from './contest';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as contests from './contest';
 import * as consts from './const';
 
-function titleTreeItem(title: string, collapsibleState: vscode.TreeItemCollapsibleState, icon?: string): contest.Question {
-    return new contest.Question('', title, [], collapsibleState, icon);
+
+function titleTreeItem(title: string, collapsibleState: vscode.TreeItemCollapsibleState, icon?: string, command?: vscode.Command): contests.Question {
+    return new contests.Question('', title, [], collapsibleState, [], icon, command);
 }
 
-export class Provider implements vscode.TreeDataProvider<contest.Question> {
+export class Provider implements vscode.TreeDataProvider<contests.Question> {
+    private readonly _onDidChangeTreeData = new vscode.EventEmitter<contests.Question | undefined | null | void>();
+    readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
     constructor(
         private readonly workspaceRoot: string,
-        private readonly contestRawURL: string,
+        public contest: contests.Contest | undefined,
     ) { }
 
-    getTreeItem(element: contest.Question): vscode.TreeItem {
+    getTreeItem(element: contests.Question): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: contest.Question): vscode.ProviderResult<contest.Question[]> {
+    getChildren(element?: contests.Question): vscode.ProviderResult<contests.Question[]> {
         if (!this.workspaceRoot) {
             // show welcome view
             return [];
@@ -32,16 +34,29 @@ export class Provider implements vscode.TreeDataProvider<contest.Question> {
         }
 
         if (element?.label == 'Problem') {
-            const recordPath = path.join(this.workspaceRoot, consts.CONTEST_RECORD);
-            if (fs.existsSync(recordPath)) {
-                const recordContent = fs.readFileSync(recordPath, 'utf-8');
-                const record = JSON.parse(recordContent) as contest.Record;
-                return record.questions ?? [];
+            const contest = contests.load(consts.root);
+            if (contest) {
+                this.contest = contest;
+                return contest.questions;
             }
 
             return [
-                titleTreeItem('Please set a competition.', vscode.TreeItemCollapsibleState.None, 'triangle-right'),
+                titleTreeItem(
+                    'Please press this item to set a competition.',
+                    vscode.TreeItemCollapsibleState.None,
+                    'triangle-right',
+                    {
+                        command: consts.CMD_OPEN_CONTEST,
+                        title: 'Open Contest',
+                    },
+                ),
             ];
         }
     }
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire(undefined);
+    }
 }
+
+export const provider = new Provider(consts.root, undefined);

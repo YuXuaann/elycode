@@ -1,8 +1,6 @@
 import * as contest from './contest';
 import * as consts from './const';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 
 async function getContestName(id: string): Promise<string | undefined> {
     const res = await fetch(consts.CODEFORCES_API_BASE + '/' + consts.CODEFORCES_LIST);
@@ -21,13 +19,12 @@ export class Codeforces implements contest.Contest {
         new contest.Question('id1', 'Question 1', [
             { input: 'Example input 1', output: 'Example output 1' },
             { input: 'Example input 2', output: 'Example output 2' },
-        ], vscode.TreeItemCollapsibleState.Collapsed),
+        ], vscode.TreeItemCollapsibleState.Collapsed, []),
         new contest.Question('id2', 'Question 2', [
             { input: 'Example input A', output: 'Example output A' },
             { input: 'Example input B', output: 'Example output B' },
-        ], vscode.TreeItemCollapsibleState.Collapsed),
+        ], vscode.TreeItemCollapsibleState.Collapsed, []),
     ];
-    record: contest.Record = new contest.Record();
 
     constructor(meta: contest.Meta) {
         this.meta = meta;
@@ -40,20 +37,13 @@ export class Codeforces implements contest.Contest {
 
         meta.platform = 'Codeforces';
 
-        if (segments.length >= 2 && segments[0] === 'contest') {
-            meta.id = segments[1];
+        if (segments.length >= 2 && segments[1] === 'contest') {
+            meta.id = segments[2];
         } else {
             throw new Error(`Invalid Codeforces contest URL: ${pathname}`);
         }
 
         meta.name = await getContestName(meta.id ?? '');
         return new Codeforces(meta);
-    }
-
-    save(savePath: string): void {
-        const record = this.record;
-        const filePath = path.join(savePath, consts.CONTEST_RECORD);
-        fs.mkdirSync(savePath, { recursive: true });
-        fs.writeFileSync(filePath, JSON.stringify(record, null, 4), 'utf-8');
     }
 }

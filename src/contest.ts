@@ -1,6 +1,8 @@
 import * as cf from './codeforces';
 import * as vscode from 'vscode';
 import * as consts from './const';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // todo: export type ContestPlatform = 'Codeforces' | 'AtCoder' | 'LeetCode' | 'HackerRank' | 'CodeChef' | undefined;
 export type ContestPlatform = 'Codeforces' | undefined; // for now, we only support Codeforces
@@ -24,16 +26,16 @@ export class Question extends vscode.TreeItem {
         public title: string,
         public examples: Example[],
         public collapsibleState: vscode.TreeItemCollapsibleState,
-        icon?: string
+        public historyCommit: Commit[],
+        icon?: string,
+        command?: vscode.Command
     ) {
         super(title, collapsibleState);
-        this.id = id;
-        this.title = title;
-        this.examples = examples;
         this.contextValue = 'question';
         if (icon) {
             this.iconPath = new vscode.ThemeIcon(icon);
         }
+        this.command = command;
     }
 }
 
@@ -43,18 +45,9 @@ export class Commit {
     result: string | undefined;
 }
 
-export class Record {
-    meta: Meta | undefined;
-    questions: Question[] | undefined;
-    lastHistoryCommit: Commit[] | undefined;
-}
-
 export interface Contest {
     meta: Meta;
     questions: Question[];
-    record: Record;
-
-    save(savePath: string): void;
 }
 
 export async function parse(rawURL: string): Promise<Contest | undefined> {
@@ -68,4 +61,26 @@ export async function parse(rawURL: string): Promise<Contest | undefined> {
     }
 
     return undefined;
+}
+
+export function load(savePath: string): Contest | undefined {
+    const filePath = path.join(savePath, consts.CONTEST_RECORD);
+    if (!fs.existsSync(filePath)) {
+        return undefined;
+    }
+
+    const recordContent = fs.readFileSync(filePath, 'utf-8');
+    const record = JSON.parse(recordContent);
+
+    if (record as cf.Codeforces) {
+        return record as cf.Codeforces;
+    }
+
+    return undefined;
+}
+
+export function save(contest: Contest, savePath: string): void {
+    const filePath = path.join(savePath, consts.CONTEST_RECORD);
+    fs.mkdirSync(savePath, { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(contest, null, 4), 'utf-8');
 }
