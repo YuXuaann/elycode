@@ -33,7 +33,8 @@
 		"views": {
 			"elycode": [
 				{
-					"id": "menu",
+					"id": "elycode.sidebarView",
+					"type": "tree",
 					"name": "",
 					"icon": "media/icon.svg",
 					"contextualTitle": "Package Explorer"
@@ -42,8 +43,8 @@
 		},
 		"viewsWelcome": [
 			{
-				"view": "menu",
-				"contents": "No competition found.\n[Add Competition](command:extension.elycode)"
+				"view": "elycode.sidebarView",
+				"contents": "Please open a workspace first.\n[Open Workspace](command:extension.openWorkspace)",
 			}
 		]
 	},
