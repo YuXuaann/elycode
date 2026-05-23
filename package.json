@@ -44,7 +44,7 @@
 		"viewsWelcome": [
 			{
 				"view": "elycode.sidebarView",
-				"contents": "Please open a workspace first.\n[Open Workspace](command:extension.openWorkspace)",
+				"contents": "Please open a workspace first.\n[Open Workspace](command:extension.openWorkspace)"
 			}
 		]
 	},

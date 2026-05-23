@@ -1,7 +1,7 @@
 import * as contest from './contest';
 import * as vscode from 'vscode';
 
-export const CODEFORCES_HOSTS: Set<string> = new Set([
+export const CODEFORCES_HOSTS = new Set<string>([
     'codeforces.com',
     'm1.codeforces.com',
     'm2.codeforces.com',
@@ -15,7 +15,7 @@ async function getContestName(id: string): Promise<string | undefined> {
     if (json.status !== 'OK') {
         return undefined;
     }
-    const found = json.result.find((c: any) => String(c.id) === id);
+    const found = json.result.find((c: { id: number | string }) => String(c.id) === id);
     return found?.name;
 }
 
