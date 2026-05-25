@@ -16,19 +16,42 @@ export async function openWorkspace() {
 }
 
 export async function openContest() {
-    vscode.window.showInformationMessage('Please open a contest URL in the input box.');
+    void vscode.window.showInformationMessage('Please enter a contest URL in the input box.');
     const url = await vscode.window.showInputBox({ prompt: 'Enter contest URL' });
-    if (url) {
-        const contest = await contests.parse(url);
-        if (contest) {
-            tree.provider.contest = contest;
-        } else {
-            vscode.window.showErrorMessage('Failed to parse contest from the provided URL.');
-        }
-        contests.save(contest!, consts.root);
-        tree.provider.refresh();
-    } else {
+    if (!url) {
         vscode.window.showErrorMessage('No URL entered.');
+        return;
+    }
+
+    try {
+        const contest = await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Loading contest data...',
+            cancellable: true,
+        }, async (_, token) => {
+            token.onCancellationRequested(() => {
+                throw new Error('User cancelled');
+            });
+
+            const parsed = await contests.parse(url);
+            if (!parsed) {
+                throw new Error('Failed to parse contest from the provided URL.');
+            }
+            return parsed;
+        });
+
+        tree.provider.contest = contest;
+        contests.save(contest, consts.root);
+        tree.provider.refresh();
+        void vscode.window.showInformationMessage('Contest loaded successfully.');
+    } catch (error) {
+        if (error instanceof Error && error.message === 'User cancelled') {
+            void vscode.window.showInformationMessage('Contest loading cancelled.');
+            return;
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to load contest: ${message}`);
     }
 }
 

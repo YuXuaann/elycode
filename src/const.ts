@@ -9,7 +9,7 @@ export const CMD_HELLO = 'elycode.hello';
 export const CMD_SIDEBAR_VIEW = 'elycode.sidebarView';
 
 // contest
-export const CONTEST_RECORD = 'record.json';
+export const CONTEST_RECORD = 'elycode.json';
 
 export const CODEFORCES_HOSTS = new Set<string>([
     'codeforces.com',
@@ -18,4 +18,4 @@ export const CODEFORCES_HOSTS = new Set<string>([
     'm3.codeforces.com',
 ]);
 export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
-export const CODEFORCES_LIST = 'contest.list';
+export const CODEFORCES_STANDINGS = 'contest.standings';
