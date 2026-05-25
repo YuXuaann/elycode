@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
+		"module": "node16",
 		"target": "ES2024",
 		"lib": [
 			"ES2024",
@@ -9,6 +9,7 @@
 		"types": [
 			"node"
 		],
+		"moduleResolution": "node16",
 		"outDir": "out",
 		"sourceMap": true,
 		"strict": true,

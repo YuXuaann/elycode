@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as contest from './contest';
 import * as consts from './const';
+import { JSDOM } from 'jsdom';
 
 export class Codeforces implements contest.Contest {
     constructor(
@@ -42,7 +43,6 @@ export class Codeforces implements contest.Contest {
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
                 const examples = await getProblems(meta.id, questionId) ?? [];
-                console.log(`examples for problem ${questionId}:`, examples);
                 const question = new contest.Question(
                     questionId,
                     title,
@@ -60,35 +60,30 @@ export class Codeforces implements contest.Contest {
     }
 }
 
-async function getProblems(contestId: string, id: string): Promise<contest.Example[] | undefined> {
-    const response = await fetch(`https://codeforces.com/contest/${contestId}/problem/${id}?locale=en`, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': `https://codeforces.com/contest/${contestId}`,
-            'Cache-Control': 'no-cache',
-        },
-    });
+export async function getProblems(contestId: string, id: string): Promise<contest.Example[] | undefined> {
+    const response = await fetch(`${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`);
     if (!response.ok) {
         vscode.window.showErrorMessage(`Failed to fetch problem page for ${id}`);
         return undefined;
     }
 
     const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const dom = new JSDOM(html);
+    const samples = dom.window.document.querySelectorAll('script#lentille-context');
+    if (samples.length === 0) {
+        return undefined;
+    }
 
-    const sampleTests = doc.querySelectorAll('.sample-test');
-    const examples: contest.Example[] = [];
-    sampleTests.forEach((sample) => {
-        const input = sample.querySelector('.input pre');
-        const output = sample.querySelector('.output pre');
-        examples.push({
-            input: input?.textContent ?? undefined,
-            output: output?.textContent ?? undefined,
+    try {
+        const context = JSON.parse(samples[0].textContent ?? '{}');
+        const problemSamples: string[][] = context?.data?.problem?.samples ?? [];
+        return problemSamples.map((sample: string[]) => {
+            const [input = '', output = ''] = sample;
+            return { input, output };
         });
-    });
-
-    return examples;
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to parse samples for ${id}: ${message}`);
+        return undefined;
+    }
 }
