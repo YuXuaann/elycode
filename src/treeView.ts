@@ -17,6 +17,10 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
     ) { }
 
     getTreeItem(element: contests.Question): vscode.TreeItem {
+        if (element.examples.length > 0) {
+            // show new window to display input & output
+            return element;
+        }
         return element;
     }
 

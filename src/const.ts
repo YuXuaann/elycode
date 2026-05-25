@@ -5,6 +5,7 @@ export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 // command
 export const CMD_OPEN_WORKSPACE = 'elycode.openWorkspace';
 export const CMD_OPEN_CONTEST = 'elycode.openContest';
+export const CMD_RELOAD_CONTEST = 'elycode.reloadContest';
 export const CMD_HELLO = 'elycode.hello';
 export const CMD_SIDEBAR_VIEW = 'elycode.sidebarView';
 

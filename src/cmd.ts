@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as consts from './const';
 import * as contests from './contest';
 import * as tree from './treeView';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function openWorkspace() {
     const selected = await vscode.window.showOpenDialog({
@@ -55,6 +57,27 @@ export async function openContest() {
     }
 }
 
+export function reloadContest() {
+    if (!consts.root) {
+        vscode.window.showErrorMessage('No workspace opened.');
+        return;
+    }
+
+    const recordPath = path.join(consts.root, consts.CONTEST_RECORD);
+
+    try {
+        if (fs.existsSync(recordPath)) {
+            fs.unlinkSync(recordPath);
+        }
+
+        tree.provider.contest = undefined;
+        tree.provider.refresh();
+        void vscode.window.showInformationMessage('Contest reloaded.');
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to reload contest: ${message}`);
+    }
+}
 
 export function elycodeHello() {
     // todo: add doctor

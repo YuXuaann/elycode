@@ -18,15 +18,13 @@
 		"commands": [
 			{
 				"command": "elycode.hello",
-				"title": "elycode"
+				"title": "elycode: doctor",
+				"shortTitle": "elycode: doctor"
 			},
 			{
-				"command": "elycode.openWorkspace",
-				"title": "Open Workspace"
-			},
-			{
-				"command": "elycode.openContest",
-				"title": "Open Contest"
+				"command": "elycode.reloadContest",
+				"title": "elycode: Reload Contest",
+				"shortTitle": "elycode: reload"
 			}
 		],
 		"viewsContainers": {
