@@ -8,6 +8,7 @@ import * as path from 'path';
 export type ContestPlatform = 'Codeforces' | undefined; // for now, we only support Codeforces
 
 export class Meta {
+    createdTime: Date | undefined;
     platform: ContestPlatform;
     id: string | undefined;  // unique identifier for the contest, e.g., "cf-2231" = "Codeforces Round 1099 (Div. 2)"
     name: string | undefined; // human-readable name of the contest
@@ -48,6 +49,15 @@ export class Commit {
 export interface Contest {
     meta: Meta;
     questions: Question[];
+}
+
+export function setQuestionCommands(contest: Contest, command: (q: Question) => vscode.Command, when?: (q: Question) => boolean) {
+    for (const question of contest.questions) {
+        if (when && !when(question)) {
+            continue;
+        }
+        question.command = command(question);
+    }
 }
 
 export async function parse(rawURL: string): Promise<Contest | undefined> {

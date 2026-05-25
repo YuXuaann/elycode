@@ -4,6 +4,7 @@ import * as contests from './contest';
 import * as tree from './treeView';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 
 export async function openWorkspace() {
     const selected = await vscode.window.showOpenDialog({
@@ -41,6 +42,11 @@ export async function openContest() {
             }
             return parsed;
         });
+        contests.setQuestionCommands(contest, (q) => ({
+            command: consts.CMD_CODING_WINDOW,
+            title: 'Open Coding Window',
+            arguments: [q.id, q.examples],
+        }));
 
         tree.provider.contest = contest;
         contests.save(contest, consts.root);
@@ -82,4 +88,54 @@ export function reloadContest() {
 export function elycodeHello() {
     // todo: add doctor
     vscode.window.showInformationMessage('elycode works normally');
+}
+
+export async function codingWindow(questionId: string, examples: contests.Example[]) {
+    if (!tree.provider.contest?.meta?.id) {
+        vscode.window.showErrorMessage('Contest is not loaded.');
+        return;
+    }
+
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+        vscode.window.showErrorMessage('Please open a workspace first.');
+        return;
+    }
+
+    const problemFilename = `${questionId}.cpp`;
+    const problemUri = vscode.Uri.joinPath(workspaceFolder.uri, problemFilename);
+
+    try {
+        const problemExists = fs.existsSync(problemUri.fsPath);
+        if (!problemExists) {
+            fs.writeFileSync(problemUri.fsPath, '// Start coding here\n');
+        }
+
+        const doc = await vscode.workspace.openTextDocument(problemUri);
+        await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One, preview: false });
+
+        const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'elycode-'));
+        const samplePath = path.join(tempDir, `${questionId}-sample.txt`);
+
+        const sampleContent = examples.map((example, index) => {
+            const input = example.input ?? '';
+            const output = example.output ?? '';
+            return [
+                `# Sample ${index + 1}`,
+                '# Input',
+                input,
+                '# Output',
+                output,
+                '',
+            ].join('\n');
+        }).join('\n');
+
+        fs.writeFileSync(samplePath, sampleContent || '# No samples available');
+        const sampleUri = vscode.Uri.file(samplePath);
+        const sampleDoc = await vscode.workspace.openTextDocument(sampleUri);
+        await vscode.window.showTextDocument(sampleDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to open coding window: ${message}`);
+    }
 }

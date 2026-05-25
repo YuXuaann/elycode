@@ -10,6 +10,7 @@ export function activate(_: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(consts.CMD_OPEN_WORKSPACE, cmd.openWorkspace);
 	vscode.commands.registerCommand(consts.CMD_OPEN_CONTEST, cmd.openContest);
 	vscode.commands.registerCommand(consts.CMD_RELOAD_CONTEST, cmd.reloadContest);
+	vscode.commands.registerCommand(consts.CMD_CODING_WINDOW, cmd.codingWindow);
 
 	vscode.window.registerTreeDataProvider(consts.CMD_SIDEBAR_VIEW, tree.provider);
 }

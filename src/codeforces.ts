@@ -13,6 +13,7 @@ export class Codeforces implements contest.Contest {
         const meta = new contest.Meta();
         const questions: contest.Question[] = [];
 
+        meta.createdTime = new Date();
         meta.platform = 'Codeforces';
 
         pathname.replace(/\/+$|^\/+/, '');
@@ -47,7 +48,7 @@ export class Codeforces implements contest.Contest {
                     questionId,
                     title,
                     examples,
-                    vscode.TreeItemCollapsibleState.Collapsed,
+                    vscode.TreeItemCollapsibleState.None,
                     [],
                 );
                 question.description = problem.points ? `${problem.points} pts` : undefined;
