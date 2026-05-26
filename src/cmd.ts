@@ -63,7 +63,7 @@ export async function openContest() {
     }
 }
 
-export function reloadContest() {
+export async function reloadContest() {
     if (!consts.root) {
         vscode.window.showErrorMessage('No workspace opened.');
         return;
@@ -71,14 +71,52 @@ export function reloadContest() {
 
     const recordPath = path.join(consts.root, consts.CONTEST_RECORD);
 
+    const existingContest = tree.provider.contest ?? contests.load(consts.root);
+    const cppFiles = new Set<string>();
+
+    if (existingContest?.questions?.length) {
+        for (const question of existingContest.questions) {
+            const filePath = path.join(consts.root, `${question.id}.cpp`);
+            cppFiles.add(filePath);
+        }
+    }
+
+    const cppFileNames = Array.from(cppFiles).map((filePath) => path.basename(filePath));
+    const warningMessageParts = [
+        'Reloading the contest will delete the saved contest record.',
+    ];
+
+    if (cppFileNames.length) {
+        warningMessageParts.push(`It will also remove the following C++ files: ${cppFileNames.join(', ')}`);
+    }
+
+    warningMessageParts.push('Do you want to continue?');
+
+    const confirm = await vscode.window.showWarningMessage(
+        warningMessageParts.join(' '),
+        { modal: true },
+        'Delete'
+    );
+
+    if (confirm !== 'Delete') {
+        void vscode.window.showInformationMessage('Contest reload cancelled.');
+        return;
+    }
+
     try {
         if (fs.existsSync(recordPath)) {
             fs.unlinkSync(recordPath);
         }
 
+        for (const filePath of cppFiles) {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+
         tree.provider.contest = undefined;
         tree.provider.refresh();
-        void vscode.window.showInformationMessage('Contest reloaded.');
+        void vscode.window.showInformationMessage('Contest reloaded and generated files removed.');
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to reload contest: ${message}`);
@@ -139,3 +177,17 @@ export async function codingWindow(questionId: string, examples: contests.Exampl
         vscode.window.showErrorMessage(`Failed to open coding window: ${message}`);
     }
 }
+
+// export function updateContestName(name: string) {
+//     const contest = tree.provider.contest;
+//     if (!contest) {
+//         vscode.window.showErrorMessage('Contest is not loaded.');
+//         return;
+//     }
+
+//     if (!name) {
+//         return;
+//     }
+
+//     tree.provider.setRootTitle(name);
+// }

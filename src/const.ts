@@ -9,9 +9,10 @@ export const CMD_RELOAD_CONTEST = 'elycode.reloadContest';
 export const CMD_HELLO = 'elycode.hello';
 export const CMD_SIDEBAR_VIEW = 'elycode.sidebarView';
 export const CMD_CODING_WINDOW = 'elycode.codingWindow';
+export const CMD_UPDATE_CONTEST_NAME = 'elycode.updateContestName';
 
 // contest
-export const CONTEST_RECORD = 'elycode.json';
+export const CONTEST_RECORD = '.elycode.json';
 export const CONTEST_PROBLEMS_API_BASE = "https://www.luogu.com.cn/problem";
 
 export const CODEFORCES_HOSTS = new Set<string>([

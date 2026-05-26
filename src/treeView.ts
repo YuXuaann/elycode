@@ -10,6 +10,7 @@ function titleTreeItem(title: string, collapsibleState: vscode.TreeItemCollapsib
 export class Provider implements vscode.TreeDataProvider<contests.Question> {
     private readonly _onDidChangeTreeData = new vscode.EventEmitter<contests.Question | undefined | null | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+    private rootTitle = 'Problem';
 
     constructor(
         private readonly workspaceRoot: string,
@@ -17,10 +18,6 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
     ) { }
 
     getTreeItem(element: contests.Question): vscode.TreeItem {
-        if (element.examples.length > 0) {
-            // show new window to display input & output
-            return element;
-        }
         return element;
     }
 
@@ -31,17 +28,13 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
         }
 
         if (!element) {
-            // show problem head
-            return [
-                titleTreeItem('Problem', vscode.TreeItemCollapsibleState.Expanded, 'list-unordered'),
-            ];
-        }
-
-        if (element?.label == 'Problem') {
             const contest = contests.load(consts.root);
             if (contest) {
                 this.contest = contest;
-                return contest.questions;
+                this.rootTitle = `[${contest.meta.platform ?? 'Unknown'}]${contest.meta.name ?? this.rootTitle}`;
+                return [
+                    titleTreeItem(this.rootTitle, vscode.TreeItemCollapsibleState.Expanded, 'list-unordered'),
+                ];
             }
 
             return [
@@ -56,6 +49,12 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
                 ),
             ];
         }
+
+        if (element.label === this.rootTitle && this.contest) {
+            return this.contest.questions;
+        }
+
+        return [];
     }
 
     refresh(): void {
