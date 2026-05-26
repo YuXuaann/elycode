@@ -43,7 +43,7 @@ export class Codeforces implements contest.Contest {
                 const title = problem.index && problem.name
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
-                const examples = await getProblems(meta.id, questionId) ?? [];
+                const examples = await getProblemsWithName(meta.id, questionId, problem.name ?? '') ?? [];
                 const question = new contest.Question(
                     questionId,
                     title,
@@ -61,10 +61,10 @@ export class Codeforces implements contest.Contest {
     }
 }
 
-export async function getProblems(contestId: string, id: string): Promise<contest.Example[] | undefined> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getProblems(contestId: string, id: string): Promise<any | undefined> {
     const response = await fetch(`${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`);
     if (!response.ok) {
-        vscode.window.showErrorMessage(`Failed to fetch problem page for ${id}`);
         return undefined;
     }
 
@@ -77,14 +77,59 @@ export async function getProblems(contestId: string, id: string): Promise<contes
 
     try {
         const context = JSON.parse(samples[0].textContent ?? '{}');
-        const problemSamples: string[][] = context?.data?.problem?.samples ?? [];
-        return problemSamples.map((sample: string[]) => {
-            const [input = '', output = ''] = sample;
-            return { input, output };
-        });
+        return context?.data?.problem ?? [];
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to parse samples for ${id}: ${message}`);
         return undefined;
     }
+}
+
+export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<contest.Example[] | undefined> {
+    const numericContestId = Number(contestId);
+    if (Number.isNaN(numericContestId)) {
+        throw new Error(`Invalid contestID ${contestId}`);
+    }
+
+    const problem = await getProblems(contestId, id);
+    if (problem || name === '') {
+        const problemSamples: string[][] = problem.samples ?? [];
+        return problemSamples.map((sample: string[]) => {
+            const [input = '', output = ''] = sample;
+            return { input, output };
+        });
+    }
+    console.warn(`Problem ${id} not found in contest ${contestId}, trying adjacent contests...`);
+
+    for (const delta of [-1, 1]) {
+        const contestId = String(numericContestId + delta);
+        const params = new URLSearchParams({ contestId: contestId });
+        const ret = await fetch(`${consts.CODEFORCES_API_BASE}/${consts.CODEFORCES_STANDINGS}?${params.toString()}`);
+        const json = await ret.json();
+        if (json.status !== 'OK') {
+            continue;
+        }
+
+        const { problems } = json.result;
+        if (!Array.isArray(problems)) {
+            continue;
+        }
+
+        for (const problem of problems) {
+            if (!problem.index || !problem.name) {
+                continue;
+            }
+            const luoguProblem = await getProblems(contestId, problem.index);
+
+            if (name === luoguProblem.name) {
+                const problemSamples: string[][] = luoguProblem.samples ?? [];
+                return problemSamples.map((sample: string[]) => {
+                    const [input = '', output = ''] = sample;
+                    return { input, output };
+                });
+            }
+        }
+    }
+
+    return undefined;
 }
