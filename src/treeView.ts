@@ -39,7 +39,7 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
 
             return [
                 titleTreeItem(
-                    'Press this item to set a competition.',
+                    'Set a competition.',
                     vscode.TreeItemCollapsibleState.None,
                     'triangle-right',
                     {

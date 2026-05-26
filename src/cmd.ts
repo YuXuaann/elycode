@@ -177,17 +177,3 @@ export async function codingWindow(questionId: string, examples: contests.Exampl
         vscode.window.showErrorMessage(`Failed to open coding window: ${message}`);
     }
 }
-
-// export function updateContestName(name: string) {
-//     const contest = tree.provider.contest;
-//     if (!contest) {
-//         vscode.window.showErrorMessage('Contest is not loaded.');
-//         return;
-//     }
-
-//     if (!name) {
-//         return;
-//     }
-
-//     tree.provider.setRootTitle(name);
-// }

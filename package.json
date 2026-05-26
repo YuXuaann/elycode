@@ -27,6 +27,17 @@
 				"shortTitle": "elycode: reload"
 			}
 		],
+		"notebooks": [
+			{
+				"type": "elycode.notebook",
+				"displayName": "elyNote",
+				"selector": [
+					{
+						"filenamePattern": "*.elynote"
+					}
+				]
+			}
+		],
 		"viewsContainers": {
 			"activitybar": [
 				{
