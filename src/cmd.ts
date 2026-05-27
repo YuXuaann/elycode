@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as consts from './const';
 import * as contests from './contest';
 import * as tree from './treeView';
+import * as utils from './utils';
+import type { RawNotebook, RawNotebookCell } from './notebook';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -49,7 +51,7 @@ export async function openContest() {
         }));
 
         tree.provider.contest = contest;
-        contests.save(contest, consts.root);
+        contests.save(contest, consts.elycodeDir);
         tree.provider.refresh();
         void vscode.window.showInformationMessage('Contest loaded successfully.');
     } catch (error) {
@@ -69,9 +71,8 @@ export async function reloadContest() {
         return;
     }
 
-    const recordPath = path.join(consts.root, consts.CONTEST_RECORD);
-
-    const existingContest = tree.provider.contest ?? contests.load(consts.root);
+    const recordDir = consts.elycodeDir;
+    const existingContest = tree.provider.contest ?? contests.load(consts.elycodeDir);
     const cppFiles = new Set<string>();
 
     if (existingContest?.questions?.length) {
@@ -104,8 +105,8 @@ export async function reloadContest() {
     }
 
     try {
-        if (fs.existsSync(recordPath)) {
-            fs.unlinkSync(recordPath);
+        if (fs.existsSync(recordDir)) {
+            fs.rmSync(recordDir, { recursive: true, force: true });
         }
 
         for (const filePath of cppFiles) {
@@ -152,28 +153,87 @@ export async function codingWindow(questionId: string, examples: contests.Exampl
         const doc = await vscode.workspace.openTextDocument(problemUri);
         await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One, preview: false });
 
-        const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'elycode-'));
-        const samplePath = path.join(tempDir, `${questionId}-sample.txt`);
+        const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
+        const cells: RawNotebookCell[] = examples.length ? examples.map((example, index) => {
+            const inputLines = (example.input ?? '').split(/\r?\n/g);
+            const outputLines = (example.output ?? '').split(/\r?\n/g);
+            const cellLines: string[] = [
+                `#### Sample ${index + 1}: Input`,
+                '```cpp',
+                ...inputLines,
+                '```',
+            ];
 
-        const sampleContent = examples.map((example, index) => {
-            const input = example.input ?? '';
-            const output = example.output ?? '';
-            return [
-                `# Sample ${index + 1}`,
-                '# Input',
-                input,
-                '# Output',
-                output,
-                '',
-            ].join('\n');
-        }).join('\n');
+            if (outputLines.length) {
+                cellLines.push(`#### Sample ${index + 1}: Output`);
+                cellLines.push('```cpp');
+                cellLines.push(...outputLines);
+                cellLines.push('```');
+            }
 
-        fs.writeFileSync(samplePath, sampleContent || '# No samples available');
-        const sampleUri = vscode.Uri.file(samplePath);
-        const sampleDoc = await vscode.workspace.openTextDocument(sampleUri);
-        await vscode.window.showTextDocument(sampleDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
+            return {
+                cell_type: 'markdown',
+                source: cellLines,
+            };
+        }) : [
+            {
+                cell_type: 'markdown',
+                source: ['#### No samples available'],
+            }
+        ];
+
+        const notebookData: RawNotebook = {
+            '#sym': 'RawNotebook',
+            cells,
+        };
+
+        fs.writeFileSync(notebookPath, JSON.stringify(notebookData, null, 2), 'utf-8');
+        const notebookUri = vscode.Uri.file(notebookPath);
+        const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
+        await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to open coding window: ${message}`);
     }
+}
+
+export function runCode(input: string): string | undefined {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor || !activeEditor.document.fileName.endsWith('.cpp') || !activeEditor.document.fileName.endsWith('.c')) {
+        void vscode.window.showErrorMessage('No active C/C++ file to run.');
+        return undefined;
+    }
+
+    let ret: string | undefined = undefined;
+
+    void vscode.window.withProgress({
+        location: vscode.ProgressLocation.Window,
+        title: 'Compiling and running...'
+    }, async () => {
+        const sourcePath = activeEditor.document.uri.fsPath;
+
+        const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'elycode-run-'));
+        const executablePath = path.join(tempDir, 'submission.out');
+
+        try {
+            await utils.compileCpp(sourcePath, executablePath);
+        } catch {
+            console.error('Compilation failed');
+            return;
+        }
+
+        try {
+            const result = await utils.runExecutable(executablePath, input);
+            if (result.error) {
+                vscode.window.showErrorMessage(`Execution failed: ${result.error.message}`);
+                return;
+            }
+            ret = result.stdout;
+        } catch {
+            console.error('Execution failed');
+            return;
+        }
+    });
+
+    return ret;
 }

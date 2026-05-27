@@ -1,12 +1,18 @@
 import { TextDecoder, TextEncoder } from 'util';
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as cmd from './cmd';
 import * as consts from './const';
+import * as tree from './treeView';
+import * as contests from './contest';
 
-interface RawNotebook {
+export interface RawNotebook {
+    '#sym'?: 'RawNotebook';
     cells: RawNotebookCell[];
 }
 
-interface RawNotebookCell {
+export interface RawNotebookCell {
     source: string[];
     cell_type: 'code' | 'markdown';
 }
@@ -18,9 +24,14 @@ export class Serializer implements vscode.NotebookSerializer {
     ): Promise<vscode.NotebookData> {
         const contents = new TextDecoder().decode(content);
 
-        let raw: RawNotebookCell[];
+        let raw: RawNotebookCell[] = [];
         try {
-            raw = (JSON.parse(contents) as RawNotebook).cells;
+            const parsed = JSON.parse(contents) as RawNotebook | RawNotebookCell[];
+            if (Array.isArray(parsed)) {
+                raw = parsed;
+            } else if (parsed?.cells) {
+                raw = parsed.cells;
+            }
         } catch {
             raw = [];
         }
@@ -52,7 +63,9 @@ export class Serializer implements vscode.NotebookSerializer {
             });
         }
 
-        return new TextEncoder().encode(JSON.stringify(contents));
+        const notebook: RawNotebook = { '#sym': 'RawNotebook', cells: contents };
+
+        return new TextEncoder().encode(JSON.stringify(notebook, null, 2));
     }
 }
 
@@ -85,28 +98,109 @@ export class Controller implements vscode.Disposable {
         this._controller.dispose();
     }
 
-    private _execute(
+    private async _execute(
         cells: vscode.NotebookCell[],
-        _notebook: vscode.NotebookDocument,
+        notebook: vscode.NotebookDocument,
         _controller: vscode.NotebookController
-    ): void {
-        for (const cell of cells) {
-            this._doExecution(cell);
+    ): Promise<void> {
+        for (const [index, cell] of cells.entries()) {
+            await this._doExecution(cell, notebook, index);
         }
     }
 
-    private async _doExecution(cell: vscode.NotebookCell): Promise<void> {
+    private async _doExecution(cell: vscode.NotebookCell, notebook: vscode.NotebookDocument, cellIndex: number): Promise<void> {
         const execution = this._controller.createNotebookCellExecution(cell);
         execution.executionOrder = ++this._executionOrder;
         execution.start(Date.now()); // Keep track of elapsed time to execute cell.
 
-        /* Do some execution here; not implemented */
+        try {
+            const contest = tree.provider.contest ?? contests.load(consts.elycodeDir);
+            if (!contest) {
+                throw new Error('Contest data is not loaded.');
+            }
 
-        execution.replaceOutput([
-            new vscode.NotebookCellOutput([
-                vscode.NotebookCellOutputItem.text('Dummy output text!')
-            ])
-        ]);
-        execution.end(true, Date.now());
+            const notebookFile = notebook.uri.fsPath;
+            const questionId = path.basename(notebookFile, path.extname(notebookFile));
+            const question = contest.questions.find(q => q.id === questionId);
+            if (!question) {
+                throw new Error(`Cannot find contest question with id "${questionId}".`);
+            }
+
+            const example = question.examples[cellIndex];
+            if (!example) {
+                throw new Error(`No sample data found for cell #${cellIndex + 1}.`);
+            }
+
+            const sourcePath = path.join(consts.root, `${question.id}.cpp`);
+            if (!fs.existsSync(sourcePath)) {
+                throw new Error(`Source file ${question.id}.cpp is missing.`);
+            }
+
+            const output = await cmd.runCode(example.input ?? '');
+            if (output === undefined) {
+                execution.replaceOutput([
+                    new vscode.NotebookCellOutput([
+                        vscode.NotebookCellOutputItem.error({
+                            name: 'ExecutionError',
+                            message: 'Code execution failed.',
+                        })
+                    ])
+                ]);
+                execution.end(false, Date.now());
+                return;
+            }
+
+            const expected = normalizeLineEndings(example.output ?? '');
+            const actual = normalizeLineEndings(output);
+
+            if (expected === actual) {
+                execution.replaceOutput([
+                    new vscode.NotebookCellOutput([
+                        vscode.NotebookCellOutputItem.text(`Sample #${cellIndex + 1}: Accepted`)])
+                ]);
+                execution.end(true, Date.now());
+                return;
+            }
+
+            const diff = formatDiff(expected, actual);
+            execution.replaceOutput([
+                new vscode.NotebookCellOutput([
+                    vscode.NotebookCellOutputItem.text(`Sample #${cellIndex + 1}: Wrong Answer\n\n${diff}`)
+                ])
+            ]);
+            execution.end(false, Date.now());
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            execution.replaceOutput([
+                new vscode.NotebookCellOutput([
+                    vscode.NotebookCellOutputItem.error({ name: 'ExecutionError', message })
+                ])
+            ]);
+            execution.end(false, Date.now());
+        }
     }
+}
+
+function normalizeLineEndings(text: string): string {
+    return text.replace(/\r\n/g, '\n').trimEnd();
+}
+
+function formatDiff(expected: string, actual: string): string {
+    const expectedLines = expected.split('\n');
+    const actualLines = actual.split('\n');
+    const maxLen = Math.max(expectedLines.length, actualLines.length);
+    const diffLines: string[] = [];
+
+    for (let i = 0; i < maxLen; i += 1) {
+        const expectedLine = expectedLines[i] ?? '';
+        const actualLine = actualLines[i] ?? '';
+        if (expectedLine === actualLine) {
+            diffLines.push(`  ${expectedLine}`);
+        } else {
+            diffLines.push(`- ${expectedLine}`);
+            diffLines.push(`+ ${actualLine}`);
+        }
+    }
+
+    return diffLines.join('\n');
 }

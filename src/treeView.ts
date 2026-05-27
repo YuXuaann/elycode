@@ -28,7 +28,7 @@ export class Provider implements vscode.TreeDataProvider<contests.Question> {
         }
 
         if (!element) {
-            const contest = contests.load(consts.root);
+            const contest = contests.load(consts.elycodeDir);
             if (contest) {
                 this.contest = contest;
                 this.rootTitle = `[${contest.meta.platform ?? 'Unknown'}]${contest.meta.name ?? this.rootTitle}`;

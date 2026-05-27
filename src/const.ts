@@ -1,6 +1,8 @@
+import path from 'path';
 import * as vscode from 'vscode';
 
 export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+export const elycodeDir = path.join(root, '.elycode');
 
 // command
 export const CMD_OPEN_WORKSPACE = 'elycode.openWorkspace';
@@ -14,6 +16,7 @@ export const CMD_UPDATE_CONTEST_NAME = 'elycode.updateContestName';
 
 // contest
 export const CONTEST_RECORD = '.elycode.json';
+export const CONTEST_SAMPLE = '.elynote';
 export const CONTEST_PROBLEMS_API_BASE = "https://www.luogu.com.cn/problem";
 
 export const CODEFORCES_HOSTS = new Set<string>([
