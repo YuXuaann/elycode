@@ -43,7 +43,7 @@ export class Serializer implements vscode.NotebookSerializer {
                         ? vscode.NotebookCellKind.Code
                         : vscode.NotebookCellKind.Markup,
                     item.source.join('\n'),
-                    item.cell_type === 'code' ? 'python' : 'markdown'
+                    item.cell_type === 'code' ? 'plaintext' : 'markdown'
                 )
         );
 
@@ -98,15 +98,17 @@ export class Controller implements vscode.Disposable {
         this._controller.dispose();
     }
 
-    private async _execute(
+    private _execute(
         cells: vscode.NotebookCell[],
         notebook: vscode.NotebookDocument,
         _controller: vscode.NotebookController
-    ): Promise<void> {
+    ) {
+        console.log(`Executing ${cells.length} cells in notebook ${notebook.uri.toString()}`);
         for (const [index, cell] of cells.entries()) {
-            await this._doExecution(cell, notebook, index);
+            this._doExecution(cell, notebook, index);
         }
     }
+
 
     private async _doExecution(cell: vscode.NotebookCell, notebook: vscode.NotebookDocument, cellIndex: number): Promise<void> {
         const execution = this._controller.createNotebookCellExecution(cell);
