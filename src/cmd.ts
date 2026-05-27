@@ -188,20 +188,20 @@ export async function codingWindow(questionId: string, examples: contests.Exampl
     }
 }
 
-export function runCode(input: string): string | undefined {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor || !activeEditor.document.fileName.endsWith('.cpp') || !activeEditor.document.fileName.endsWith('.c')) {
-        void vscode.window.showErrorMessage('No active C/C++ file to run.');
+export async function runCode(input: string): Promise<string | undefined> {
+    const editors = [vscode.window.activeTextEditor, ...vscode.window.visibleTextEditors];
+    const cppEditor = editors.find(editor => editor && editor.document && (editor.document.fileName.endsWith('.cpp') || editor.document.fileName.endsWith('.c')));
+
+    if (!cppEditor) {
+        vscode.window.showErrorMessage('No active C/C++ file to run.');
         return undefined;
     }
 
-    let ret: string | undefined = undefined;
-
-    void vscode.window.withProgress({
+    return await vscode.window.withProgress({
         location: vscode.ProgressLocation.Window,
         title: 'Compiling and running...'
     }, async () => {
-        const sourcePath = activeEditor.document.uri.fsPath;
+        const sourcePath = cppEditor.document.uri.fsPath;
 
         const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'elycode-run-'));
         const executablePath = path.join(tempDir, 'submission.out');
@@ -210,7 +210,7 @@ export function runCode(input: string): string | undefined {
             await utils.compileCpp(sourcePath, executablePath);
         } catch {
             console.error('Compilation failed');
-            return;
+            return undefined;
         }
 
         try {
@@ -219,12 +219,10 @@ export function runCode(input: string): string | undefined {
                 vscode.window.showErrorMessage(`Execution failed: ${result.error.message}`);
                 return;
             }
-            ret = result.stdout;
+            return result.stdout;
         } catch {
             console.error('Execution failed');
-            return;
+            return undefined;
         }
     });
-
-    return ret;
 }

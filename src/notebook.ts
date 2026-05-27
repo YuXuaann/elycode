@@ -158,7 +158,7 @@ export class Controller implements vscode.Disposable {
             if (expected === actual) {
                 execution.replaceOutput([
                     new vscode.NotebookCellOutput([
-                        vscode.NotebookCellOutputItem.text(`Sample #${cellIndex + 1}: Accepted`)])
+                        vscode.NotebookCellOutputItem.text(`Accepted`)])
                 ]);
                 execution.end(true, Date.now());
                 return;
@@ -167,7 +167,7 @@ export class Controller implements vscode.Disposable {
             const diff = formatDiff(expected, actual);
             execution.replaceOutput([
                 new vscode.NotebookCellOutput([
-                    vscode.NotebookCellOutputItem.text(`Sample #${cellIndex + 1}: Wrong Answer\n\n${diff}`)
+                    vscode.NotebookCellOutputItem.text(`Wrong Answer\n\n${diff}`)
                 ])
             ]);
             execution.end(false, Date.now());
