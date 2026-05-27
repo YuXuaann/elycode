@@ -154,21 +154,41 @@ export async function codingWindow(questionId: string, examples: contests.Exampl
         await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.One, preview: false });
 
         const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
-        const cells: RawNotebookCell[] = examples.length ? examples.map((example, index) => {
-            const inputLines = (example.input ?? '').split(/\r?\n/g);
-            const outputLines = (example.output ?? '').split(/\r?\n/g);
+        const containerStyle = 'style="display:inline-block; width:fit-content; max-width:100%; border:1px solid #594dff; border-radius:6px; padding:12px; background:#1e1e1e; box-sizing:border-box;"';
+        const preStyle = 'style="margin:0; white-space:pre-wrap; font-family:var(--vscode-editor-font-family);"';
+        const escapeHtml = (value: string): string => value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        const removeLeadingEmpty = (lines: string[]): string[] => {
+            let start = 0;
+            while (start < lines.length && lines[start].trim().length === 0) {
+                start += 1;
+            }
+            return lines.slice(start);
+        };
+        const createBlock = (contentLines: string[]): string[] => {
+            const content = escapeHtml(contentLines.join('\n'));
+            return [
+                `<div ${containerStyle}>`,
+                `<pre ${preStyle}>${content}</pre>`,
+                '</div>',
+            ];
+        };
+        const cells: RawNotebookCell[] = examples.length ? examples.map((example) => {
+            const inputLines = removeLeadingEmpty((example.input ?? '').split(/\r?\n/g));
+            const outputLines = removeLeadingEmpty((example.output ?? '').split(/\r?\n/g));
             const cellLines: string[] = [
-                `#### Sample ${index + 1}: Input`,
-                '```cpp',
-                ...inputLines,
-                '```',
+                '#### Input',
+                ...createBlock(inputLines),
             ];
 
             if (outputLines.length) {
-                cellLines.push(`#### Sample ${index + 1}: Output`);
-                cellLines.push('```cpp');
-                cellLines.push(...outputLines);
-                cellLines.push('```');
+                cellLines.push('');
+                cellLines.push('#### Output');
+                cellLines.push(...createBlock(outputLines));
             }
 
             return {
