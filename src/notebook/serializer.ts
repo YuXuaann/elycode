@@ -1,12 +1,12 @@
 import { TextDecoder, TextEncoder } from 'util';
 import * as vscode from 'vscode';
 
-interface RawNotebookCell {
+export interface RawNotebookCell {
     source: string[];
     type: vscode.NotebookCellKind;
 }
 
-interface RawNotebook {
+export interface RawNotebook {
     '#sym'?: 'RawNotebook';
     cells: RawNotebookCell[];
 }

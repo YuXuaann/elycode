@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as cmd from './commands';
-import * as tree from './viewer/treeView';
+import * as tree from './viewer/viewer';
 import * as consts from './consts';
 import * as serializer from './notebook/serializer';
 import * as controller from './notebook/controller';
@@ -12,6 +12,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	vscode.commands.registerCommand(consts.commands.openWorkspace, cmd.openWorkspace);
 	vscode.commands.registerCommand(consts.commands.openContest, cmd.openContest);
 	vscode.commands.registerCommand(consts.commands.reloadContest, cmd.reloadContest);
+	vscode.commands.registerCommand(consts.commands.codingWindow, cmd.codingWindow);
 
 	const components = [];
 	components.push(vscode.window.registerTreeDataProvider(consts.commands.sidebarView, tree.getTree()));

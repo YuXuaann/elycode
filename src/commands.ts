@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as consts from './consts';
 import * as contests from './contest/contest';
-import * as tree from './viewer/treeView';
+import * as tree from './viewer/viewer';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -74,9 +74,14 @@ export async function reloadContest() {
     }
 
     try {
-        const removedFiles = [consts.elycodeDir, cppFiles.map((file) => path.join(consts.root!, file))].flat();
+        const removedFiles = cppFiles.map((file) => path.join(consts.root!, file));
         for (const filePath of removedFiles) {
-            fs.unlinkSync(filePath);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+        }
+        if (fs.existsSync(consts.elycodeDir)) {
+            fs.rmSync(consts.elycodeDir, { recursive: true, force: true });
         }
         tree.reloadContest(undefined);
         void vscode.window.showInformationMessage('Contest reloaded and generated files removed.');
@@ -89,4 +94,18 @@ export async function reloadContest() {
 export function elycodeHello() {
     // todo: add doctor
     vscode.window.showInformationMessage('elycode works normally');
+}
+
+export async function codingWindow(questionId: string) {
+    const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
+    const notebook = tree.getNotebook();
+    if (!notebook) {
+        vscode.window.showErrorMessage(`Unexpected Error in Elycode!`);
+        return;
+    }
+    const content = notebook.generate(questionId);
+    fs.writeFileSync(notebookPath, JSON.stringify(content, null, 2), 'utf-8');
+    const notebookUri = vscode.Uri.file(notebookPath);
+    const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
+    await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
 }
