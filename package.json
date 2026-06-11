@@ -7,7 +7,7 @@
 	"publisher": "yuxuaan",
 	"author": "yuxuaan",
 	"type": "commonjs",
-	"main": "./out/extension.js",
+	"main": "./out/elycode.js",
 	"engines": {
 		"vscode": "^1.100.0"
 	},

@@ -1,40 +1,51 @@
-import * as vscode from 'vscode';
+import * as meta from './meta';
 import * as contest from './contest';
-import * as consts from './const';
+import * as consts from '../consts';
 import { JSDOM } from 'jsdom';
 
 export class Codeforces implements contest.Contest {
     constructor(
-        public meta: contest.Meta,
-        public questions: contest.Question[]
+        public meta: meta.Meta,
+        public questions: meta.Question[]
     ) { }
 
-    static async new(pathname: string): Promise<Codeforces> {
-        const meta = new contest.Meta();
-        const questions: contest.Question[] = [];
+    static {
+        const cfMeta = new meta.Meta();
+        cfMeta.platform = 'Codeforces';
+        contest.register(consts.CODEFORCES_HOSTS, new Codeforces(cfMeta, []), (data: unknown) => {
+            if (data as Codeforces) {
+                return data as Codeforces;
+            }
+            return undefined;
+        });
+    }
 
-        meta.createdTime = new Date();
-        meta.platform = 'Codeforces';
+    async create(pathname: string): Promise<Codeforces> {
+        const cfMeta = new meta.Meta();
+        const questions: meta.Question[] = [];
+
+        cfMeta.createdTime = new Date();
+        cfMeta.platform = 'Codeforces';
 
         pathname.replace(/\/+$|^\/+/, '');
         const segments = pathname.split('/');
         if (!(segments.length >= 2 && segments[1] === 'contest')) {
             throw new Error(`Invalid Codeforces contest URL: ${pathname}`);
         }
-        meta.id = segments[2];
+        cfMeta.id = segments[2];
 
-        const params = new URLSearchParams({ contestId: meta.id });
+        const params = new URLSearchParams({ contestId: cfMeta.id });
         const ret = await fetch(`${consts.CODEFORCES_API_BASE}/${consts.CODEFORCES_STANDINGS}?${params.toString()}`);
         const json = await ret.json();
         if (json.status !== 'OK') {
-            return new Codeforces(meta, questions);
+            return new Codeforces(cfMeta, questions);
         }
 
         const { contest: contestInfo, problems } = json.result;
         if (contestInfo) {
-            meta.name = contestInfo.name;
-            meta.startTime = new Date(contestInfo.startTimeSeconds * 1000);
-            meta.endTime = new Date((contestInfo.startTimeSeconds + contestInfo.durationSeconds) * 1000);
+            cfMeta.name = contestInfo.name;
+            cfMeta.startTime = new Date(contestInfo.startTimeSeconds * 1000);
+            cfMeta.endTime = new Date((contestInfo.startTimeSeconds + contestInfo.durationSeconds) * 1000);
         }
 
         if (Array.isArray(problems)) {
@@ -43,21 +54,20 @@ export class Codeforces implements contest.Contest {
                 const title = problem.index && problem.name
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
-                const examples = await getProblemsWithName(meta.id, questionId, problem.name ?? '') ?? [];
-                const question = new contest.Question(
+                const examples = await getProblemsWithName(cfMeta.id, questionId, problem.name ?? '') ?? [];
+                const question = new meta.Question(
                     questionId,
                     title,
+                    'normal',
                     examples,
-                    vscode.TreeItemCollapsibleState.None,
-                    [],
+                    new meta.Statics(),
                 );
-                question.description = problem.points ? `${problem.points} pts` : undefined;
-                question.tooltip = problem.tags?.length ? `${problem.tags.join(', ')}` : undefined;
+                question.statics.points = problem.points ? `${problem.points} pts` : undefined;
                 questions.push(question);
             }
         }
 
-        return new Codeforces(meta, questions);
+        return new Codeforces(cfMeta, questions);
     }
 }
 
@@ -75,17 +85,11 @@ export async function getProblems(contestId: string, id: string): Promise<any | 
         return undefined;
     }
 
-    try {
-        const context = JSON.parse(samples[0].textContent ?? '{}');
-        return context?.data?.problem ?? [];
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to parse samples for ${id}: ${message}`);
-        return undefined;
-    }
+    const context = JSON.parse(samples[0].textContent ?? '{}');
+    return context?.data?.problem ?? [];
 }
 
-export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<contest.Example[] | undefined> {
+export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<meta.Sample[] | undefined> {
     const numericContestId = Number(contestId);
     if (Number.isNaN(numericContestId)) {
         throw new Error(`Invalid contestID ${contestId}`);
