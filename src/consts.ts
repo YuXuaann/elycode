@@ -4,17 +4,17 @@ import * as vscode from 'vscode';
 export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 export const elycodeDir = path.join(root, '.elycode');
 
-// command
-export const CMD_OPEN_WORKSPACE = 'elycode.openWorkspace';
-export const CMD_OPEN_CONTEST = 'elycode.openContest';
-export const CMD_RELOAD_CONTEST = 'elycode.reloadContest';
-export const CMD_HELLO = 'elycode.hello';
-export const CMD_SIDEBAR_VIEW = 'elycode.sidebarView';
-export const CMD_NOTEBOOK = 'elycode.notebook';
-export const CMD_CODING_WINDOW = 'elycode.codingWindow';
-export const CMD_UPDATE_CONTEST_NAME = 'elycode.updateContestName';
+export enum commands {
+    elycodeHello = 'elycode.hello',
+    openWorkspace = 'elycode.openWorkspace',
+    openContest = 'elycode.openContest',
+    reloadContest = 'elycode.reloadContest',
+    sidebarView = 'elycode.sidebarView',
+    notebook = 'elycode.notebook',
+    codingWindow = 'elycode.codingWindow',
+    updateContestName = 'elycode.updateContestName',
+}
 
-// contest
 export const CONTEST_RECORD = '.elycode.json';
 export const CONTEST_SAMPLE = '.elynote';
 export const CONTEST_PROBLEMS_API_BASE = "https://www.luogu.com.cn/problem";

@@ -11,7 +11,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
     getTreeItem(element: item.Item): vscode.TreeItem {
         switch (element.type) {
             case item.ItemType.EmptyContest:
-                return new item.TreeItem('Set a competition.', vscode.TreeItemCollapsibleState.None, 'triangle-right');
+                return new item.TreeItem('Set a competition.', vscode.TreeItemCollapsibleState.None, 'triangle-right', undefined, consts.commands.openContest);
             case item.ItemType.Contest:
                 return new item.TreeItem(
                     this.contest?.meta.name ?? 'Unknown Contest',

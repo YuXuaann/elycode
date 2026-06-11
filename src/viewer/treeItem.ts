@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as contest from '../contest/contest';
+import * as consts from '../consts';
 
 export enum ItemType {
     EmptyContest = 'EmptyContest',
@@ -27,11 +28,14 @@ export class TreeItem extends vscode.TreeItem {
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly icon?: string,
         public readonly description?: string,
-        public readonly command?: vscode.Command,
+        command?: consts.commands,
     ) {
         super(label, collapsibleState);
+
+        const commandStr = command ? command.toString() : '';
+        this.command = { command: commandStr, title: commandStr };
+
         this.iconPath = icon ? new vscode.ThemeIcon(icon) : undefined;
-        this.command = command;
         this.description = description;
     }
 }

@@ -13,7 +13,7 @@ export class Controller implements vscode.Disposable {
 
     static async new(): Promise<Controller> {
         const languages = await vscode.languages.getLanguages();
-        return new Controller(consts.CMD_NOTEBOOK, consts.CMD_NOTEBOOK, consts.CMD_NOTEBOOK, languages);
+        return new Controller(consts.commands.notebook, consts.commands.notebook, consts.commands.notebook, languages);
     }
 
     dispose(): void {

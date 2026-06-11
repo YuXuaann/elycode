@@ -13,7 +13,7 @@ export async function openWorkspace() {
         openLabel: 'Open Workspace',
     });
     if (selected && selected.length > 0) {
-        await vscode.commands.executeCommand(consts.CMD_OPEN_WORKSPACE, selected[0]);
+        await vscode.commands.executeCommand(consts.commands.openWorkspace, selected[0]);
     }
 }
 
