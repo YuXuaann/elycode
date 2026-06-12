@@ -63,6 +63,38 @@
 				"view": "elycode.sidebarView",
 				"contents": "Please open a workspace first.\n[Open Workspace](command:elycode.openWorkspace)"
 			}
+		],
+		"configuration": [
+			{
+				"title": "elycode",
+				"properties": {
+					"elycode.compilerPath": {
+						"type": "string",
+						"default": "",
+						"description": "Path to the code compiler."
+					},
+					"elycode.compileExtraParams": {
+						"type": "string",
+						"default": "",
+						"description": "Additional command-line parameters for the compiler."
+					},
+					"elycode.temporaryPath": {
+						"type": "string",
+						"default": "/tmp/elycode",
+						"description": "Directory used to store temporary build artifacts."
+					},
+					"elycode.runningTimeLimit(seconds)": {
+						"type": "number",
+						"default": 2,
+						"description": "Maximum execution time per submission."
+					},
+					"elycode.runningMemoryLimit(MB)": {
+						"type": "number",
+						"default": 256,
+						"description": "Maximum memory usage per submission."
+					}
+				}
+			}
 		]
 	},
 	"scripts": {

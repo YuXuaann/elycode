@@ -1,7 +1,8 @@
 import * as meta from './meta';
 import * as contest from './contest';
 import * as consts from '../consts';
-import { JSDOM } from 'jsdom';
+import * as jsdom from 'jsdom';
+import { Result, Ok, Err } from "../consts";
 
 export class Codeforces implements contest.Contest {
     constructor(
@@ -14,13 +15,13 @@ export class Codeforces implements contest.Contest {
         cfMeta.platform = 'Codeforces';
         contest.register(consts.CODEFORCES_HOSTS, new Codeforces(cfMeta, []), (data: unknown) => {
             if (data as Codeforces) {
-                return data as Codeforces;
+                return Ok(data as Codeforces);
             }
-            return undefined;
+            return Err(new Error("It is not codeforces platform"));
         });
     }
 
-    async create(pathname: string): Promise<Codeforces> {
+    async create(pathname: string): Promise<Result<Codeforces>> {
         const cfMeta = new meta.Meta();
         const questions: meta.Question[] = [];
 
@@ -30,7 +31,7 @@ export class Codeforces implements contest.Contest {
         pathname.replace(/\/+$|^\/+/, '');
         const segments = pathname.split('/');
         if (!(segments.length >= 2 && segments[1] === 'contest')) {
-            throw new Error(`Invalid Codeforces contest URL: ${pathname}`);
+            return Err(new Error(`Invalid Codeforces contest URL: ${pathname}`));
         }
         cfMeta.id = segments[2];
 
@@ -38,7 +39,7 @@ export class Codeforces implements contest.Contest {
         const ret = await fetch(`${consts.CODEFORCES_API_BASE}/${consts.CODEFORCES_STANDINGS}?${params.toString()}`);
         const json = await ret.json();
         if (json.status !== 'OK') {
-            return new Codeforces(cfMeta, questions);
+            return Err(new Error(`Codeforces fetch Error with status: ${json.status}`));
         }
 
         const { contest: contestInfo, problems } = json.result;
@@ -54,7 +55,11 @@ export class Codeforces implements contest.Contest {
                 const title = problem.index && problem.name
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
-                const examples = await getProblemsWithName(cfMeta.id, questionId, problem.name ?? '') ?? [];
+                const { result, error } = await getProblemsWithName(cfMeta.id, questionId, problem.name ?? '');
+                if (error) {
+                    console.warn(error);
+                }
+                const examples = result ?? [];
                 const question = new meta.Question(
                     questionId,
                     title,
@@ -67,42 +72,45 @@ export class Codeforces implements contest.Contest {
             }
         }
 
-        return new Codeforces(cfMeta, questions);
+        return Ok(new Codeforces(cfMeta, questions));
     }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getProblems(contestId: string, id: string): Promise<any | undefined> {
+export async function getProblems(contestId: string, id: string): Promise<Result<any>> {
+    console.log(`[getProblems] contestId: ${contestId}, id: ${id}`);
     const response = await fetch(`${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`);
     if (!response.ok) {
-        return undefined;
+        return Err(new Error(`Codeforces fetch problems Error with status: ${response.status}`));
     }
 
     const html = await response.text();
-    const dom = new JSDOM(html);
+    const dom = new jsdom.JSDOM(html);
     const samples = dom.window.document.querySelectorAll('script#lentille-context');
     if (samples.length === 0) {
-        return undefined;
+        return Err(new Error(`Codeforces fetch problems Error with empty return`));
     }
 
     const context = JSON.parse(samples[0].textContent ?? '{}');
-    return context?.data?.problem ?? [];
+    return Ok(context?.data?.problem ?? []);
 }
 
-export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<meta.Sample[] | undefined> {
+export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<Result<meta.Sample[]>> {
     const numericContestId = Number(contestId);
     if (Number.isNaN(numericContestId)) {
-        throw new Error(`Invalid contestID ${contestId}`);
+        return Err(new Error(`Codeforces fetch problems Error with Invalid contestID: ${contestId}`));
     }
 
-    const problem = await getProblems(contestId, id);
-    if (problem || name === '') {
-        const problemSamples: string[][] = problem.samples ?? [];
-        return problemSamples.map((sample: string[]) => {
+    const { result: problem, error } = await getProblems(contestId, id);
+    if (!error || name === '') {
+        const problemSamples: string[][] = problem!.samples ?? [];
+        const res = problemSamples.map((sample: string[]) => {
             const [input = '', output = ''] = sample;
             return { input, output };
         });
+        return Ok(res);
     }
+
     console.warn(`Problem ${id} not found in contest ${contestId}, trying adjacent contests...`);
 
     for (const delta of [-1, 1]) {
@@ -123,17 +131,21 @@ export async function getProblemsWithName(contestId: string, id: string, name: s
             if (!problem.index || !problem.name) {
                 continue;
             }
-            const luoguProblem = await getProblems(contestId, problem.index);
+            const { result: luoguProblem, error } = await getProblems(contestId, problem.index);
+            if (error) {
+                continue;
+            }
 
             if (name === luoguProblem.name) {
                 const problemSamples: string[][] = luoguProblem.samples ?? [];
-                return problemSamples.map((sample: string[]) => {
+                const res = problemSamples.map((sample: string[]) => {
                     const [input = '', output = ''] = sample;
                     return { input, output };
                 });
+                return Ok(res);
             }
         }
     }
 
-    return undefined;
+    return Err(new Error(`Problem ${id} not found in contest ${contestId}`));
 }

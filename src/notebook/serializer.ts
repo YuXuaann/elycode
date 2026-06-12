@@ -1,4 +1,4 @@
-import { TextDecoder, TextEncoder } from 'util';
+import * as util from 'util';
 import * as vscode from 'vscode';
 
 export interface RawNotebookCell {
@@ -16,7 +16,7 @@ export class Serializer implements vscode.NotebookSerializer {
         content: Uint8Array,
         _: vscode.CancellationToken
     ): vscode.NotebookData {
-        const contents = new TextDecoder().decode(content);
+        const contents = new util.TextDecoder().decode(content);
 
         const parsed = JSON.parse(contents) as RawNotebook;
         if (!parsed) {
@@ -50,6 +50,6 @@ export class Serializer implements vscode.NotebookSerializer {
 
         const notebook: RawNotebook = { '#sym': 'RawNotebook', cells: contents };
 
-        return new TextEncoder().encode(JSON.stringify(notebook, null, 2));
+        return new util.TextEncoder().encode(JSON.stringify(notebook, null, 2));
     }
 }

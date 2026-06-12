@@ -1,5 +1,6 @@
 import * as meta from './meta';
 import * as func from './func';
+import { Result } from "../consts";
 
 /**
  * @fileoverview Core contract for contest integrations.
@@ -8,7 +9,7 @@ import * as func from './func';
  *    that calls `register` with:
  *    - the set of URL hosts supported by your platform
  *    - the platform metadata (`meta.Meta`)
- *    - a transfer function (`(data: unknown) => Contest | undefined`) that restores serialized state
+ *    - a transfer function (`(data: unknown) => Result<Contest>`) that restores serialized state
  * 2. Import your implementation in this file so the module executes and registration side-effects run.
  *
  * Example:
@@ -34,7 +35,7 @@ export interface Contest {
     /**
      * Instantiate contest metadata and questions from a remote source.
      */
-    create(pathname: string): Promise<Contest>;
+    create(pathname: string): Promise<Result<Contest>>;
 
     /**
      * Metadata describing the contest (identifier, name, schedule, etc.).
@@ -47,8 +48,8 @@ export interface Contest {
     questions: meta.Question[];
 }
 
-export const availableFactories = new Map<ReadonlySet<string>, (path: string) => Promise<Contest | undefined>>();
-export const availableContests = new Map<meta.Platform, (data: unknown) => Contest | undefined>();
+export const availableFactories = new Map<ReadonlySet<string>, (path: string) => Promise<Result<Contest>>>();
+export const availableContests = new Map<meta.Platform, (data: unknown) => Result<Contest>>();
 
 
 /**
@@ -58,7 +59,7 @@ export const availableContests = new Map<meta.Platform, (data: unknown) => Conte
  * @param contest A lightweight instance that exposes the `create` factory.
  * @param transfer A function that converts serialized payloads back into `Contest` instances.
  */
-export function register(hosts: ReadonlySet<string>, contest: Contest, transfer: (data: unknown) => Contest | undefined): void {
+export function register(hosts: ReadonlySet<string>, contest: Contest, transfer: (data: unknown) => Result<Contest>): void {
     console.log(`Registering contest for hosts: ${[...hosts].join(', ')}`);
     availableFactories.set(hosts, contest.create);
     availableContests.set(contest.meta.platform, transfer);

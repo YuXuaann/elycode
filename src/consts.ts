@@ -4,6 +4,14 @@ import * as vscode from 'vscode';
 export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 export const elycodeDir = path.join(root, '.elycode');
 
+export enum configs {
+    compilerPath = 'compilerPath',
+    compileExtraParams = 'compileExtraParams',
+    temporaryPath = 'temporaryPath',
+    runningTimeLimit = 'runningTimeLimit',
+    runningMemoryLimit = 'runningMemoryLimit',
+}
+
 export enum commands {
     elycodeHello = 'elycode.hello',
     openWorkspace = 'elycode.openWorkspace',
@@ -27,3 +35,8 @@ export const CODEFORCES_HOSTS = new Set<string>([
 ]);
 export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
 export const CODEFORCES_STANDINGS = 'contest.standings';
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type Result<T> = { result?: T, error?: Error };
+export function Ok<T>(result: T): Result<T> { return { result }; }
+export function Err<T>(error: Error): Result<T> { return { error }; }

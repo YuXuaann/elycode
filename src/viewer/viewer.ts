@@ -3,6 +3,7 @@ import * as consts from '../consts';
 import * as contests from '../contest/contest';
 import * as item from './treeItem';
 import * as notebook from '../notebook/notebook';
+import { Result, Ok, Err } from "../consts";
 
 export class TreeView implements vscode.TreeDataProvider<item.Item> {
     contest?: contests.Contest;
@@ -32,7 +33,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                     element.question?.name ?? 'Unknown Question',
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
-                    element.question?.statics.points ? `${element.question.statics.points} pts` : undefined,
+                    element.question?.statics.points ? element.question.statics.points : undefined,
                     { command: consts.commands.codingWindow, title: 'Open Coding Window', arguments: [element.question?.id ?? ''] }
                 );
             default:
@@ -47,12 +48,15 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
         }
 
         if (!element) {
-            const contest = contests.loadFromLocal();
-            if (contest) {
-                reloadContest(contest);
-                return [item.Item.Contest];
+            const { result: contest, error } = contests.loadFromLocal();
+            if (error) {
+                console.log(error);
+                return [item.Item.EmptyContest];
             }
-            return [item.Item.EmptyContest];
+
+            this.contest = contest;
+            this.notebook = new notebook.Notebook(contest!.questions ?? []);
+            return [item.Item.Contest];
         }
 
         if (element.type === item.ItemType.Contest) {
@@ -71,12 +75,18 @@ export function getTree(): TreeView {
     return tree;
 }
 
-export function getContest(): contests.Contest | undefined {
-    return tree.contest;
+export function getContest(): Result<contests.Contest> {
+    if (tree.contest) {
+        return Ok(tree.contest!);
+    }
+    return Err(new Error("Contest doesn't exist"));
 }
 
-export function getNotebook(): notebook.Notebook | undefined {
-    return tree.notebook;
+export function getNotebook(): Result<notebook.Notebook> {
+    if (tree.notebook) {
+        return Ok(tree.notebook!);
+    }
+    return Err(new Error("Notebook doesn't exist"));
 }
 
 export function reloadContest(contest: contests.Contest | undefined): void {

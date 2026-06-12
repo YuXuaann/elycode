@@ -34,11 +34,11 @@ export async function openContest() {
                 throw new Error('User cancelled');
             });
 
-            const contest = await contests.loadFromURL(url);
-            if (!contest) {
-                throw new Error('Failed to load contest from the provided URL.');
+            const { result: contest, error } = await contests.loadFromURL(url);
+            if (error) {
+                throw error;
             }
-            return contest;
+            return contest!;
         });
         contests.saveToLocal(contest);
         tree.reloadContest(contest);
@@ -54,8 +54,13 @@ export async function reloadContest() {
         return;
     }
 
-    const contest = tree.getContest();
-    const cppFiles = contest?.questions?.map((question) => `${question.id}.cpp`) ?? [];
+    const { result: contest, error } = tree.getContest();
+    if (error) {
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        return;
+    }
+
+    const cppFiles = contest!.questions?.map((question) => `${question.id}.cpp`) ?? [];
 
     const warnings = ['Reloading the contest will delete the saved contest record.'];
     if (cppFiles.length) {
@@ -69,7 +74,7 @@ export async function reloadContest() {
     );
 
     if (confirm !== 'Delete') {
-        void vscode.window.showInformationMessage('Contest reload cancelled.');
+        vscode.window.showInformationMessage('Contest reload cancelled.');
         return;
     }
 
@@ -84,7 +89,7 @@ export async function reloadContest() {
             fs.rmSync(consts.elycodeDir, { recursive: true, force: true });
         }
         tree.reloadContest(undefined);
-        void vscode.window.showInformationMessage('Contest reloaded and generated files removed.');
+        vscode.window.showInformationMessage('Contest reloaded and generated files removed.');
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to reload contest: ${message}`);
@@ -98,14 +103,18 @@ export function elycodeHello() {
 
 export async function codingWindow(questionId: string) {
     const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
-    const notebook = tree.getNotebook();
-    if (!notebook) {
-        vscode.window.showErrorMessage(`Unexpected Error in Elycode!`);
-        return;
+    if (!fs.existsSync(notebookPath)) {
+        console.log("not exist");
+        const { result: notebook, error } = tree.getNotebook();
+        if (error) {
+            vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}`);
+            return;
+        }
+        const content = notebook!.generate(questionId);
+        fs.writeFileSync(notebookPath, JSON.stringify(content, null, 2), 'utf-8');
     }
-    const content = notebook.generate(questionId);
-    fs.writeFileSync(notebookPath, JSON.stringify(content, null, 2), 'utf-8');
     const notebookUri = vscode.Uri.file(notebookPath);
     const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
     await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
+    console.log("ok!");
 }

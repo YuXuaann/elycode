@@ -1,7 +1,12 @@
 import * as vscode from 'vscode';
 import * as consts from '../consts';
+import * as runner from './runner';
+import * as config from '../configs';
+import * as path from 'path';
+import * as tree from '../viewer/viewer';
 
 export class Controller implements vscode.Disposable {
+    private readonly codeRunner: runner.CodeRunner;
     private readonly _controller: vscode.NotebookController;
 
     constructor(controllerId: string, notebookType: string, label: string, languages: string[]) {
@@ -9,6 +14,7 @@ export class Controller implements vscode.Disposable {
         this._controller.supportedLanguages = languages;
         this._controller.supportsExecutionOrder = true;
         this._controller.executeHandler = this._execute.bind(this);
+        this.codeRunner = new runner.CodeRunner(config.elycodeConfig.compilerConfig!, config.elycodeConfig.runnerConfig!);
     }
 
     static async new(): Promise<Controller> {
@@ -20,25 +26,43 @@ export class Controller implements vscode.Disposable {
         this._controller.dispose();
     }
 
-    private _execute(
+    private async _execute(
         cells: vscode.NotebookCell[],
-        _notebook: vscode.NotebookDocument,
+        notebook: vscode.NotebookDocument,
         _controller: vscode.NotebookController
-    ): void {
-        for (const cell of cells) {
-            this._doExecution(cell);
+    ) {
+        const questionId = path.basename(notebook.uri.fsPath, path.extname(notebook.uri.fsPath));
+        for (const [index, cell] of cells.entries()) {
+            this._doExecution(index, cell, questionId);
         }
     }
 
-    private _doExecution(cell: vscode.NotebookCell): void {
+    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string) {
         const execution = this._controller.createNotebookCellExecution(cell);
-        execution.start(Date.now()); // Keep track of elapsed time to execute cell.
+        execution.start(Date.now());
 
-        /* Do some execution here; not implemented */
+        const codePath = path.join(consts.root, `${questionId}.cpp`);
+        const { result: contest, error: getContestError } = tree.getContest();
+        if (getContestError) {
+            console.error(getContestError);
+            return;
+        }
+
+        const question = contest!.questions?.find(q => q.id === questionId) ?? undefined;
+        if (!question) {
+            console.error(`Can not find ${questionId}`);
+            return;
+        }
+
+        const { result, error: runError } = await this.codeRunner.run(codePath, question!.samples[index].input);
+        if (runError) {
+            console.error(`code compile failed: ${runError}`);
+            return;
+        }
 
         execution.replaceOutput([
             new vscode.NotebookCellOutput([
-                vscode.NotebookCellOutputItem.text('Dummy output text!')
+                vscode.NotebookCellOutputItem.text(result!)
             ])
         ]);
         execution.end(true, Date.now());
