@@ -10,6 +10,8 @@ export enum configs {
     temporaryPath = 'temporaryPath',
     runningTimeLimit = 'runningTimeLimit',
     runningMemoryLimit = 'runningMemoryLimit',
+    templateMode = 'templateMode',
+    customTemplate = 'customTemplate',
 }
 
 export enum commands {
@@ -22,6 +24,30 @@ export enum commands {
     codingWindow = 'elycode.codingWindow',
     updateContestName = 'elycode.updateContestName',
 }
+
+export const AUTO_TEMPLATE = `#include<bits/stdc++.h>
+typedef long long ll;
+
+const int N = 2e5 + 5;
+
+void solve() {
+
+}
+
+signed main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(false);
+    std::cout.tie(false);
+
+    int T = 1;
+    cin >> T;
+    while(T--) {
+        solve();
+    }
+
+    return 0;
+}
+`;
 
 export const CONTEST_RECORD = '.elycode.json';
 export const CONTEST_SAMPLE = '.elynote';

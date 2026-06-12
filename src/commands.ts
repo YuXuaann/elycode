@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as consts from './consts';
+import * as configs from './configs';
 import * as contests from './contest/contest';
 import * as tree from './viewer/viewer';
 import * as fs from 'fs';
@@ -102,9 +103,17 @@ export function elycodeHello() {
 }
 
 export async function codingWindow(questionId: string) {
+    // todo: only support cpp currently
+    const cppFilePath = path.join(consts.root, `${questionId}.cpp`);
+    if (!fs.existsSync(cppFilePath)) {
+        fs.writeFileSync(cppFilePath, configs!.elycodeConfig!.runnerConfig!.template!);
+    }
+    const cppFileUri = vscode.Uri.file(cppFilePath);
+    const cppDoc = await vscode.workspace.openTextDocument(cppFileUri);
+    await vscode.window.showTextDocument(cppDoc, { viewColumn: vscode.ViewColumn.One, preview: false });
+
     const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
     if (!fs.existsSync(notebookPath)) {
-        console.log("not exist");
         const { result: notebook, error } = tree.getNotebook();
         if (error) {
             vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}`);

@@ -92,6 +92,20 @@
 						"type": "number",
 						"default": 256,
 						"description": "Maximum memory usage per submission."
+					},
+					"elycode.templateMode": {
+						"type": "string",
+						"enum": [
+							"auto",
+							"custom"
+						],
+						"default": "auto",
+						"description": "Choose how new *.cpp files are initialized."
+					},
+					"elycode.customTemplate": {
+						"type": "string",
+						"default": "",
+						"markdownDescription": "Used only when `elycode.templateMode` is `custom`."
 					}
 				}
 			}

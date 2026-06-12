@@ -13,10 +13,12 @@ function config() {
 	const temporaryPath = config.get<string>(consts.configs.temporaryPath, '');
 	const runningTimeLimit = config.get<number>(consts.configs.runningTimeLimit, 2);
 	const runningMemoryLimit = config.get<number>(consts.configs.runningMemoryLimit, 256);
+	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
+	const customTemplate = config.get<string>(consts.configs.customTemplate, '');
 
 	configs.elycodeConfig.codingConfig = new configs.CodingConfig("");
 	configs.elycodeConfig.compilerConfig = new configs.CompilerConfig("cpp", compilerPath, temporaryPath, compileExtraParams);
-	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit);
+	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
 }
 
 function registerCommands() {
