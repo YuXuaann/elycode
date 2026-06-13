@@ -1,6 +1,14 @@
+import * as fs from 'fs';
 import * as consts from './consts';
+import * as utils from './utils';
+import { Result, Ok, Err } from "./utils";
 
-export type LanguageType = 'cpp' | undefined;
+export type LanguageType = 'c/cpp' | undefined;
+
+enum CompilerDetectMode {
+    autoGCC = 'auto detect(gcc)',
+    customGCC = 'custom(gcc)',
+}
 
 enum TemplateMode {
     auto = 'auto',
@@ -8,24 +16,54 @@ enum TemplateMode {
 }
 
 export class ElycodeConfig {
-    codingConfig?: CodingConfig;
     compilerConfig?: CompilerConfig;
     runnerConfig?: RunnerConfig;
 }
 
-export class CodingConfig {
-    constructor(
-        public readonly newCodeTemplate: string
-    ) { }
-}
-
 export class CompilerConfig {
+    public readonly extraParams: string[];
     constructor(
         public readonly languageType: LanguageType,
         public readonly compilerPath: string,
         public readonly tempDir: string,
-        public readonly extraParams: string,
-    ) { }
+        extraParams: string,
+    ) {
+        const parsedParams = extraParams
+            .split(/\s+/)
+            .map(param => param.trim())
+            .filter(Boolean);
+
+        const mergedParams = [...consts.GCC_EXTRA_PARAMS];
+        for (const param of parsedParams) {
+            if (!mergedParams.includes(param)) {
+                mergedParams.push(param);
+            }
+        }
+
+        this.extraParams = mergedParams;
+    }
+
+    static new(
+        compilerDetectMode: string,
+        compilerCustomPath: string,
+        tempDir: string,
+        extraParams: string,
+    ): Result<CompilerConfig> {
+        fs.mkdirSync(tempDir, { recursive: true });
+        switch (compilerDetectMode) {
+            case CompilerDetectMode.customGCC:
+                return Ok(new CompilerConfig('c/cpp', compilerCustomPath, tempDir, extraParams));
+            case CompilerDetectMode.autoGCC:
+            default:
+                {
+                    const { result, error } = utils.detectGccExecutable();
+                    if (error) {
+                        return Err(error);
+                    }
+                    return Ok(new CompilerConfig('c/cpp', result!, tempDir, extraParams));
+                }
+        }
+    }
 }
 
 export class RunnerConfig {
@@ -38,14 +76,12 @@ export class RunnerConfig {
         customTemplate: string,
     ) {
         switch (templateMode) {
-            case TemplateMode.auto:
-                this.template = consts.AUTO_TEMPLATE;
-                break;
             case TemplateMode.custom:
                 this.template = customTemplate;
                 break;
+            case TemplateMode.auto:
             default:
-                this.template = consts.AUTO_TEMPLATE;
+                this.template = consts.AUTO_CODE_TEMPLATE;
                 break;
         }
     }

@@ -2,7 +2,7 @@ import * as meta from './meta';
 import * as contest from './contest';
 import * as consts from '../consts';
 import * as jsdom from 'jsdom';
-import { Result, Ok, Err } from "../consts";
+import { Result, Ok, Err } from "../utils";
 
 export class Codeforces implements contest.Contest {
     constructor(

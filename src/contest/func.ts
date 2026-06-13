@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as consts from '../consts';
 import * as contest from './contest';
-import { Result, Err } from "../consts";
+import { Result, Err } from "../utils";
 
 export async function loadFromURL(rawURL: string): Promise<Result<contest.Contest>> {
     const normalized = rawURL.trim();

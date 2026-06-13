@@ -3,7 +3,7 @@ import * as consts from '../consts';
 import * as contests from '../contest/contest';
 import * as item from './treeItem';
 import * as notebook from '../notebook/notebook';
-import { Result, Ok, Err } from "../consts";
+import { Result, Ok, Err } from "../utils";
 
 export class TreeView implements vscode.TreeDataProvider<item.Item> {
     contest?: contests.Contest;

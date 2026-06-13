@@ -8,7 +8,8 @@ import * as configs from './configs';
 
 function config() {
 	const config = vscode.workspace.getConfiguration('elycode');
-	const compilerPath = config.get<string>(consts.configs.compilerPath, '');
+	const compilerDetectMode = config.get<string>(consts.configs.compilerDetectMode, '');
+	const compilerCustomPath = config.get<string>(consts.configs.compilerCustomPath, '');
 	const compileExtraParams = config.get<string>(consts.configs.compileExtraParams, '');
 	const temporaryPath = config.get<string>(consts.configs.temporaryPath, '');
 	const runningTimeLimit = config.get<number>(consts.configs.runningTimeLimit, 2);
@@ -16,8 +17,11 @@ function config() {
 	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
 	const customTemplate = config.get<string>(consts.configs.customTemplate, '');
 
-	configs.elycodeConfig.codingConfig = new configs.CodingConfig("");
-	configs.elycodeConfig.compilerConfig = new configs.CompilerConfig("cpp", compilerPath, temporaryPath, compileExtraParams);
+	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
+	if (error) {
+		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}`);
+	}
+	configs.elycodeConfig.compilerConfig = result!;
 	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
 }
 

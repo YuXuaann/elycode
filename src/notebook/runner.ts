@@ -3,7 +3,8 @@ import * as fs from 'fs';
 import * as cp from 'child_process';
 import * as path from 'path';
 import * as util from 'util';
-import { Result, Ok, Err } from "../consts";
+import * as utils from '../utils';
+import { Result, Ok, Err } from "../utils";
 
 const execFileAsync = util.promisify(cp.execFile);
 
@@ -14,10 +15,20 @@ class Compiler {
 
     async compileToTemp(codePath: string): Promise<Result<string>> {
         const cfg = this.config;
-        const tempDir = await fs.promises.mkdtemp(path.join(cfg.tempDir, 'elycode-run-'));
+        const tempDir = fs.mkdtempSync(path.join(cfg.tempDir, 'elycode-run-'));
         const executablePath = path.join(tempDir, "elycode.out");
-        await execFileAsync(cfg.compilerPath, [codePath, cfg.extraParams, '-o', executablePath]);
-        return Ok(executablePath);
+        try {
+            const compileResult = await execFileAsync(cfg.compilerPath, [codePath, ...cfg.extraParams, '-o', executablePath]);
+            if (compileResult.stderr) {
+                return Err(new Error(compileResult.stderr));
+            }
+            return Ok(executablePath);
+        } catch (error) {
+            const err = error as cp.ExecFileException & { stderr?: string };
+            const stderr = err?.stderr?.trim();
+            const message = stderr && stderr.length > 0 ? stderr : err.message;
+            return Err(new Error(message));
+        }
     }
 }
 
@@ -27,43 +38,6 @@ export class CodeRunner extends Compiler {
         private readonly runnerConfig: config.RunnerConfig,
     ) {
         super(compilerConfig);
-    }
-
-    private runWithInput(executablePath: string, input: string): Promise<Result<{ stdout: string; stderr: string }>> {
-        return new Promise((resolve) => {
-            const child = cp.spawn(executablePath, [], { stdio: ['pipe', 'pipe', 'pipe'] });
-
-            let stdout = '';
-            let stderr = '';
-
-            child.stdout.on('data', chunk => {
-                stdout += chunk.toString();
-            });
-
-            child.stderr.on('data', chunk => {
-                stderr += chunk.toString();
-            });
-
-            child.on('error', error => {
-                if (error) {
-                    resolve(Err(error));
-                    return;
-                }
-
-                resolve(Ok({ stdout, stderr }));
-            });
-
-            child.on('close', code => {
-                if (code !== 0) {
-                    resolve(Err(new Error(stderr || `Runtime Error (exit code ${code})`)));
-                    return;
-                }
-
-                resolve(Ok({ stdout, stderr }));
-            });
-
-            child.stdin.end(input);
-        });
     }
 
     async run(codePath: string, input: string): Promise<Result<string>> {
@@ -76,7 +50,7 @@ export class CodeRunner extends Compiler {
             return Err(compileError);
         }
 
-        const { result: runResult, error: runError } = await this.runWithInput(executable!, input);
+        const { result: runResult, error: runError } = await utils.runWithInput(executable!, input);
         if (runError) {
             return Err(runError);
         }

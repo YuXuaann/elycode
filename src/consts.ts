@@ -5,7 +5,8 @@ export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 export const elycodeDir = path.join(root, '.elycode');
 
 export enum configs {
-    compilerPath = 'compilerPath',
+    compilerDetectMode = 'compilerMode',
+    compilerCustomPath = 'compilerCustomPath',
     compileExtraParams = 'compileExtraParams',
     temporaryPath = 'temporaryPath',
     runningTimeLimit = 'runningTimeLimit',
@@ -25,7 +26,7 @@ export enum commands {
     updateContestName = 'elycode.updateContestName',
 }
 
-export const AUTO_TEMPLATE = `#include<bits/stdc++.h>
+export const AUTO_CODE_TEMPLATE = `#include<bits/stdc++.h>
 typedef long long ll;
 
 const int N = 2e5 + 5;
@@ -36,11 +37,11 @@ void solve() {
 
 signed main() {
     std::ios::sync_with_stdio(false);
-    std::cin.tie(false);
-    std::cout.tie(false);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
 
     int T = 1;
-    cin >> T;
+    std::cin >> T;
     while(T--) {
         solve();
     }
@@ -62,7 +63,37 @@ export const CODEFORCES_HOSTS = new Set<string>([
 export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
 export const CODEFORCES_STANDINGS = 'contest.standings';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type Result<T> = { result?: T, error?: Error };
-export function Ok<T>(result: T): Result<T> { return { result }; }
-export function Err<T>(error: Error): Result<T> { return { error }; }
+export const GCC_DIRECTORIES_BY_PLATFORM: Record<NodeJS.Platform, string[]> = {
+    aix: [],
+    android: [],
+    cygwin: ['C:/cygwin64/bin'],
+    darwin: ['/usr/bin', '/usr/local/bin', '/opt/homebrew/bin', '/opt/local/bin'],
+    freebsd: ['/usr/bin', '/usr/local/bin'],
+    haiku: [],
+    linux: ['/usr/bin', '/usr/local/bin', '/bin', '/usr/sbin'],
+    netbsd: ['/usr/bin', '/usr/local/bin'],
+    openbsd: ['/usr/bin', '/usr/local/bin'],
+    sunos: ['/usr/bin', '/usr/local/bin'],
+    win32: [
+        'C:/msys64/usr/bin',
+        'C:/mingw64/bin',
+        'C:/Program Files/mingw-w64/bin',
+        'C:/Program Files (x86)/mingw-w64/bin'
+    ]
+};
+
+export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {
+    win32: ['gcc.exe', 'x86_64-w64-mingw32-gcc.exe'],
+    aix: ['gcc'],
+    android: ['gcc'],
+    cygwin: ['gcc'],
+    darwin: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    freebsd: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    haiku: ['gcc'],
+    linux: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    netbsd: ['gcc', 'cc'],
+    openbsd: ['gcc', 'cc'],
+    sunos: ['gcc', 'cc']
+};
+
+export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++'];

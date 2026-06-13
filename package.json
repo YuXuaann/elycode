@@ -68,32 +68,36 @@
 			{
 				"title": "elycode",
 				"properties": {
-					"elycode.compilerPath": {
+					"elycode.compilerDetectMode": {
+						"order": 1,
+						"type": "string",
+						"enum": [
+							"auto detect(gcc)",
+							"custom(gcc)"
+						],
+						"default": "auto detect(gcc)",
+						"description": "Choose whether Elycode uses the system (auto detect) or a custom path."
+					},
+					"elycode.compilerCustomPath": {
+						"order": 2,
 						"type": "string",
 						"default": "",
-						"description": "Path to the code compiler."
-					},
-					"elycode.compileExtraParams": {
-						"type": "string",
-						"default": "",
-						"description": "Additional command-line parameters for the compiler."
-					},
-					"elycode.temporaryPath": {
-						"type": "string",
-						"default": "/tmp/elycode",
-						"description": "Directory used to store temporary build artifacts."
+						"markdownDescription": "Path to the code compiler.(Used only when `elycode.compilerMode` is `custom`)"
 					},
 					"elycode.runningTimeLimit(seconds)": {
+						"order": 3,
 						"type": "number",
 						"default": 2,
 						"description": "Maximum execution time per submission."
 					},
 					"elycode.runningMemoryLimit(MB)": {
+						"order": 4,
 						"type": "number",
 						"default": 256,
 						"description": "Maximum memory usage per submission."
 					},
 					"elycode.templateMode": {
+						"order": 5,
 						"type": "string",
 						"enum": [
 							"auto",
@@ -103,9 +107,22 @@
 						"description": "Choose how new *.cpp files are initialized."
 					},
 					"elycode.customTemplate": {
+						"order": 6,
 						"type": "string",
 						"default": "",
 						"markdownDescription": "Used only when `elycode.templateMode` is `custom`."
+					},
+					"elycode.compileExtraParams": {
+						"order": 7,
+						"type": "string",
+						"default": "-std=c++17",
+						"description": "Additional command-line parameters for the compiler."
+					},
+					"elycode.temporaryPath": {
+						"order": 8,
+						"type": "string",
+						"default": "/tmp/elycode",
+						"description": "Directory used to store temporary build artifacts."
 					}
 				}
 			}

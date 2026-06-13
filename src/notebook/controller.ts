@@ -33,38 +33,33 @@ export class Controller implements vscode.Disposable {
     ) {
         const questionId = path.basename(notebook.uri.fsPath, path.extname(notebook.uri.fsPath));
         for (const [index, cell] of cells.entries()) {
-            this._doExecution(index, cell, questionId);
+            const execution = this._controller.createNotebookCellExecution(cell);
+            execution.start(Date.now());
+            const resultText = await this._doExecution(index, cell, questionId);
+            execution.replaceOutput([
+                new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(resultText)])
+            ]);
+            execution.end(true, Date.now());
         }
     }
 
-    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string) {
-        const execution = this._controller.createNotebookCellExecution(cell);
-        execution.start(Date.now());
-
+    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string): Promise<string> {
         const codePath = path.join(consts.root, `${questionId}.cpp`);
         const { result: contest, error: getContestError } = tree.getContest();
         if (getContestError) {
-            console.error(getContestError);
-            return;
+            return getContestError.message;
         }
 
         const question = contest!.questions?.find(q => q.id === questionId) ?? undefined;
         if (!question) {
-            console.error(`Can not find ${questionId}`);
-            return;
+            return `Can not find ${questionId}`;
         }
 
-        const { result, error: runError } = await this.codeRunner.run(codePath, question!.samples[index].input);
+        const { result: runResult, error: runError } = await this.codeRunner.run(codePath, question!.samples[index].input);
         if (runError) {
-            console.error(`code compile failed: ${runError}`);
-            return;
+            return runError.message;
         }
 
-        execution.replaceOutput([
-            new vscode.NotebookCellOutput([
-                vscode.NotebookCellOutputItem.text(result!)
-            ])
-        ]);
-        execution.end(true, Date.now());
+        return runResult!;
     }
 }

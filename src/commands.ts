@@ -125,5 +125,4 @@ export async function codingWindow(questionId: string) {
     const notebookUri = vscode.Uri.file(notebookPath);
     const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
     await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
-    console.log("ok!");
 }
