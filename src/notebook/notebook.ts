@@ -13,7 +13,12 @@ export class Notebook {
 
     generate(questionId: string): serializer.RawNotebook {
         const question = this.questions.get(questionId);
-        const cells = question?.samples.map((sample, i) => func.generateCellsBySample(i + 1, sample)).flat() ?? [];
-        return { '#sym': 'RawNotebook', cells };
+        if (!question) {
+            return { '#sym': 'RawNotebook', cells: [] };
+        }
+
+        const questionCell = func.generateQuestionCell(question!);
+        const sampleCells = question?.samples.map((sample, i) => func.generateSampleCells(i + 1, sample)).flat() ?? [];
+        return { '#sym': 'RawNotebook', cells: [questionCell, ...sampleCells] };
     }
 }

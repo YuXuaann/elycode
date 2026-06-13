@@ -55,16 +55,18 @@ export class Codeforces implements contest.Contest {
                 const title = problem.index && problem.name
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
-                const { result, error } = await getProblemsWithName(cfMeta.id, questionId, problem.name ?? '');
+                const { result, error } = await fetchQuestionInfoWithName(cfMeta.id, questionId, problem.name ?? '');
                 if (error) {
                     console.warn(error);
                 }
-                const examples = result ?? [];
+                const description = result?.description ?? '';
+                const samples = result?.samples ?? [];
                 const question = new meta.Question(
                     questionId,
                     title,
+                    description,
                     'normal',
-                    examples,
+                    samples,
                     new meta.Statics(),
                 );
                 question.statics.points = problem.points ? `${problem.points} pts` : undefined;
@@ -95,7 +97,18 @@ export async function getProblems(contestId: string, id: string): Promise<Result
     return Ok(context?.data?.problem ?? []);
 }
 
-export async function getProblemsWithName(contestId: string, id: string, name: string): Promise<Result<meta.Sample[]>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getResultFromProblem(problem: any): Result<{ samples: meta.Sample[]; description: string }> {
+    const problemSamples: string[][] = problem!.samples ?? [];
+    const description: string = problem!.content?.description ?? '';
+    const samples = problemSamples.map((sample: string[]) => {
+        const [input = '', output = ''] = sample;
+        return new meta.Sample(input, output);
+    });
+    return Ok({ samples, description });
+}
+
+export async function fetchQuestionInfoWithName(contestId: string, id: string, name: string): Promise<Result<{ samples: meta.Sample[]; description: string }>> {
     const numericContestId = Number(contestId);
     if (Number.isNaN(numericContestId)) {
         return Err(new Error(`Codeforces fetch problems Error with Invalid contestID: ${contestId}`));
@@ -103,12 +116,7 @@ export async function getProblemsWithName(contestId: string, id: string, name: s
 
     const { result: problem, error } = await getProblems(contestId, id);
     if (!error || name === '') {
-        const problemSamples: string[][] = problem!.samples ?? [];
-        const res = problemSamples.map((sample: string[]) => {
-            const [input = '', output = ''] = sample;
-            return { input, output };
-        });
-        return Ok(res);
+        return getResultFromProblem(problem);
     }
 
     console.warn(`Problem ${id} not found in contest ${contestId}, trying adjacent contests...`);
@@ -137,12 +145,7 @@ export async function getProblemsWithName(contestId: string, id: string, name: s
             }
 
             if (name === luoguProblem.name) {
-                const problemSamples: string[][] = luoguProblem.samples ?? [];
-                const res = problemSamples.map((sample: string[]) => {
-                    const [input = '', output = ''] = sample;
-                    return { input, output };
-                });
-                return Ok(res);
+                return getResultFromProblem(luoguProblem);
             }
         }
     }

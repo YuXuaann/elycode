@@ -33,9 +33,10 @@ export class Statics {
 
 export class Question {
     constructor(
-        public id: string,
-        public name: string,
-        public type: QuestionType,
+        public readonly id: string,
+        public readonly name: string,
+        public readonly desription: string,
+        public readonly type: QuestionType,
         public samples: Sample[],
         public statics: Statics,
     ) { }
