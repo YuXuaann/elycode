@@ -6,6 +6,7 @@ export class Notebook {
     private questions: Map<string, contest.Question>;
 
     constructor(
+        private contestId: string,
         questions: contest.Question[],
     ) {
         this.questions = new Map(questions.map((q) => [q.id, q]));
@@ -19,6 +20,6 @@ export class Notebook {
 
         const questionCell = func.generateQuestionCell(question!);
         const sampleCells = question?.samples.map((sample, i) => func.generateSampleCells(i, sample)).flat() ?? [];
-        return { '#sym': 'RawNotebook', cells: [questionCell, ...sampleCells], meta: new serializer.RawNoteBookMeta(question!.id) };
+        return { '#sym': 'RawNotebook', cells: [questionCell, ...sampleCells], meta: new serializer.RawNoteBookMeta(this.contestId, question!.id) };
     }
 }

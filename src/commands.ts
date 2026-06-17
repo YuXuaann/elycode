@@ -18,7 +18,7 @@ export async function openWorkspace() {
     }
 }
 
-export async function openContest() {
+export async function addContest() {
     void vscode.window.showInformationMessage('Please enter a contest URL in the input box.');
     const url = await vscode.window.showInputBox({ prompt: 'Enter contest URL' });
     if (!url) {
@@ -41,21 +41,20 @@ export async function openContest() {
             }
             return contest!;
         });
-        contests.saveToLocal(contest);
-        tree.reloadContest(contest);
+        tree.addContest(contest);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to load contest: ${message}`);
     }
 }
 
-export async function reloadContest() {
+export async function deleteContest(contestId: string) {
     if (!consts.root) {
         vscode.window.showErrorMessage('No workspace opened.');
         return;
     }
 
-    const { result: contest, error } = tree.getContest();
+    const { result: contest, error } = tree.getContest(contestId);
     if (error) {
         vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
         return;
@@ -63,7 +62,7 @@ export async function reloadContest() {
 
     const cppFiles = contest!.questions?.map((question) => `${question.id}.cpp`) ?? [];
 
-    const warnings = ['Reloading the contest will delete the saved contest record.'];
+    const warnings = ['Elycode will delete the contest record.'];
     if (cppFiles.length) {
         warnings.push(`It will also remove the following C++ files: ${cppFiles.join(', ')}`);
     }
@@ -75,25 +74,26 @@ export async function reloadContest() {
     );
 
     if (confirm !== 'Delete') {
-        vscode.window.showInformationMessage('Contest reload cancelled.');
+        vscode.window.showInformationMessage('Contest delete cancelled.');
         return;
     }
 
     try {
-        const removedFiles = cppFiles.map((file) => path.join(consts.root!, file));
+        const removedFiles = cppFiles.map((file) => path.join(consts.root!, contest!.meta.name, file));
         for (const filePath of removedFiles) {
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
             }
         }
-        if (fs.existsSync(consts.elycodeDir)) {
-            fs.rmSync(consts.elycodeDir, { recursive: true, force: true });
+        const removedRecord = path.join(consts.elycodeDir, contest!.meta.name);
+        if (fs.existsSync(removedRecord)) {
+            fs.rmSync(removedRecord, { recursive: true, force: true });
         }
-        tree.reloadContest(undefined);
-        vscode.window.showInformationMessage('Contest reloaded and generated files removed.');
+        tree.deleteContest(contestId);
+        vscode.window.showInformationMessage('Contest and generated files removed.');
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to reload contest: ${message}`);
+        vscode.window.showErrorMessage(`Failed to delete contest: ${message}`);
     }
 }
 
@@ -102,19 +102,29 @@ export function elycodeHello() {
     vscode.window.showInformationMessage('elycode works normally');
 }
 
-export async function codingWindow(questionId: string) {
+export async function codingWindow(contestId: string, questionId: string) {
+    const { result: contest, error } = tree.getContest(contestId);
+    if (error) {
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        return;
+    }
+
     // todo: only support cpp currently
-    const cppFilePath = path.join(consts.root, `${questionId}.cpp`);
+    const cppFileDir = path.join(consts.root, `${contest!.meta.name}`);
+    const cppFilePath = path.join(cppFileDir, `${questionId}.cpp`);
     if (!fs.existsSync(cppFilePath)) {
+        fs.mkdirSync(cppFileDir, { recursive: true });
         fs.writeFileSync(cppFilePath, configs!.elycodeConfig!.runnerConfig!.template!);
     }
     const cppFileUri = vscode.Uri.file(cppFilePath);
     const cppDoc = await vscode.workspace.openTextDocument(cppFileUri);
     await vscode.window.showTextDocument(cppDoc, { viewColumn: vscode.ViewColumn.One, preview: false });
 
-    const notebookPath = path.join(consts.elycodeDir, `${questionId}.elynote`);
+    const notebookDir = path.join(consts.elycodeDir, `${contest!.meta.name}`);
+    const notebookPath = path.join(notebookDir, `${questionId}${consts.QUESTION_NOTE}`);
     if (!fs.existsSync(notebookPath)) {
-        const { result: notebook, error } = tree.getNotebook();
+        fs.mkdirSync(notebookDir, { recursive: true });
+        const { result: notebook, error } = tree.getNotebook(contestId);
         if (error) {
             vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}`);
             return;

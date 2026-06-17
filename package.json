@@ -20,11 +20,6 @@
 				"command": "elycode.hello",
 				"title": "elycode: doctor",
 				"shortTitle": "elycode: doctor"
-			},
-			{
-				"command": "elycode.reloadContest",
-				"title": "elycode: Reload Contest",
-				"shortTitle": "elycode: reload"
 			}
 		],
 		"notebooks": [

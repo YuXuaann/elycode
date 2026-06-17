@@ -1,24 +1,28 @@
 import * as vscode from 'vscode';
-import * as contest from '../contest/contest';
 
 export enum ItemType {
-    EmptyContest = 'EmptyContest',
+    AddContest = 'AddContest',
     Contest = 'Contest',
     Question = 'Question',
+    ErrorMessage = 'errorMessage'
 }
 
 export class Item {
     constructor(
         public readonly type: ItemType,
-        public readonly question?: contest.Question
+        public questionId?: string,
+        public contestId?: string
     ) {
-        if (type === ItemType.Question && !question) {
-            throw new Error('Question item must have a question');
+        if (type === ItemType.Question && !questionId) {
+            throw new Error('Question item must have a questionId');
+        }
+        if (type === ItemType.Contest && !contestId) {
+            throw new Error('Contest item must have a contestId');
         }
     }
 
-    static EmptyContest = new Item(ItemType.EmptyContest);
-    static Contest = new Item(ItemType.Contest);
+    static AddContest = new Item(ItemType.AddContest);
+    static ErrorMessage = new Item(ItemType.ErrorMessage);
 }
 
 export class TreeItem extends vscode.TreeItem {

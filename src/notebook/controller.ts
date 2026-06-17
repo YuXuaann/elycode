@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as consts from '../consts';
 import * as runner from './runner';
+import * as serializer from './serializer';
 import * as config from '../configs';
 import * as path from 'path';
 import * as tree from '../viewer/viewer';
@@ -32,13 +33,12 @@ export class Controller implements vscode.Disposable {
         notebook: vscode.NotebookDocument,
         _controller: vscode.NotebookController
     ) {
-        const meta = notebook.metadata as { questionId?: string } | undefined;
-        const questionId = meta?.questionId ?? '';
+        const meta = notebook.metadata as serializer.RawNoteBookMeta | undefined;
 
         for (const cell of cells) {
             const execution = this._controller.createNotebookCellExecution(cell);
             execution.start(Date.now());
-            const { result, error } = await this._doExecution(cell, questionId);
+            const { result, error } = await this._doExecution(cell, meta?.contestId ?? '', meta?.questionId ?? '');
             let output: vscode.NotebookCellOutput;
             if (error) {
                 output = new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.stderr(error.message)]);
@@ -50,15 +50,15 @@ export class Controller implements vscode.Disposable {
         }
     }
 
-    private async _doExecution(cell: vscode.NotebookCell, questionId: string): Promise<Result<string>> {
+    private async _doExecution(cell: vscode.NotebookCell, contestId: string, questionId: string): Promise<Result<string>> {
         const meta = cell.metadata as { sampleIndex?: number } | undefined;
         const sampleIndex = meta?.sampleIndex ?? undefined;
 
-        const codePath = path.join(consts.root, `${questionId}.cpp`);
-        const { result: contest, error: getContestError } = tree.getContest();
+        const { result: contest, error: getContestError } = tree.getContest(contestId);
         if (getContestError) {
             return Err(new Error(getContestError.message));
         }
+        const codePath = path.join(consts.root, contest!.meta.name, `${questionId}.cpp`);
 
         const question = contest!.questions?.find(q => q.id === questionId) ?? undefined;
         if (!question) {
