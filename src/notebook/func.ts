@@ -8,6 +8,7 @@ export function generateQuestionCell(question: meta.Question): serializer.RawNot
     return {
         type: vscode.NotebookCellKind.Markup,
         source: [`#### ${question.name}`, description],
+        meta: new serializer.RawNoteBookCellMeta(),
     };
 }
 
@@ -21,12 +22,14 @@ export function generateSampleCells(id: number, sample: meta.Sample): serializer
 
     cells.push({
         type: vscode.NotebookCellKind.Markup,
-        source: [`#### Sample ${id}`],
+        source: [`#### Sample ${id + 1}`],
+        meta: new serializer.RawNoteBookCellMeta(id)
     });
 
     cells.push({
         type: vscode.NotebookCellKind.Code,
         source: [...inputLines],
+        meta: new serializer.RawNoteBookCellMeta(id)
     });
 
     return cells;
@@ -41,11 +44,11 @@ function escapeHtml(text: string): string {
         .replace(/'/g, '&#39;');
 }
 
-export function show(stdout: string, sampleOutput: string): string {
+export function show(stdout: string, sampleOutput?: string): string {
     const normalize = (text: string): string => text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
     const actual = normalize(stdout).replace(/\n+$/, '');
-    const expected = normalize(sampleOutput).replace(/\n+$/, '');
+    const expected = normalize(sampleOutput ?? '').replace(/\n+$/, '');
 
     const actualLines = actual.length > 0 ? actual.split('\n') : [''];
     const expectedLines = expected.length > 0 ? expected.split('\n') : [''];
@@ -87,13 +90,15 @@ export function show(stdout: string, sampleOutput: string): string {
         return [header, ...block];
     };
 
-    const lines: string[] = [
+    if (!sampleOutput) {
+        return renderOutputBlock('your output', actualLines, '#e5e9f0').join('\n');
+    }
+
+    return [
         statusLine,
         '',
         ...renderOutputBlock('your output', actualLines, '#ff6e6e'),
         '',
         ...renderOutputBlock('standard output', expectedLines, '#50fa7b'),
-    ];
-
-    return lines.join('\n');
+    ].join('\n');
 }

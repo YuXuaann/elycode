@@ -14,11 +14,11 @@ export class Notebook {
     generate(questionId: string): serializer.RawNotebook {
         const question = this.questions.get(questionId);
         if (!question) {
-            return { '#sym': 'RawNotebook', cells: [] };
+            return { '#sym': 'RawNotebook', cells: [], meta: new serializer.RawNoteBookMeta() };
         }
 
         const questionCell = func.generateQuestionCell(question!);
-        const sampleCells = question?.samples.map((sample, i) => func.generateSampleCells(i + 1, sample)).flat() ?? [];
-        return { '#sym': 'RawNotebook', cells: [questionCell, ...sampleCells] };
+        const sampleCells = question?.samples.map((sample, i) => func.generateSampleCells(i, sample)).flat() ?? [];
+        return { '#sym': 'RawNotebook', cells: [questionCell, ...sampleCells], meta: new serializer.RawNoteBookMeta(question!.id) };
     }
 }

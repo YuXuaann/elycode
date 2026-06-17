@@ -32,11 +32,13 @@ export class Controller implements vscode.Disposable {
         notebook: vscode.NotebookDocument,
         _controller: vscode.NotebookController
     ) {
-        const questionId = path.basename(notebook.uri.fsPath, path.extname(notebook.uri.fsPath));
-        for (const [index, cell] of cells.entries()) {
+        const meta = notebook.metadata as { questionId?: string } | undefined;
+        const questionId = meta?.questionId ?? '';
+
+        for (const cell of cells) {
             const execution = this._controller.createNotebookCellExecution(cell);
             execution.start(Date.now());
-            const { result, error } = await this._doExecution(index, cell, questionId);
+            const { result, error } = await this._doExecution(cell, questionId);
             let output: vscode.NotebookCellOutput;
             if (error) {
                 output = new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.stderr(error.message)]);
@@ -48,7 +50,10 @@ export class Controller implements vscode.Disposable {
         }
     }
 
-    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string): Promise<Result<string>> {
+    private async _doExecution(cell: vscode.NotebookCell, questionId: string): Promise<Result<string>> {
+        const meta = cell.metadata as { sampleIndex?: number } | undefined;
+        const sampleIndex = meta?.sampleIndex ?? undefined;
+
         const codePath = path.join(consts.root, `${questionId}.cpp`);
         const { result: contest, error: getContestError } = tree.getContest();
         if (getContestError) {
@@ -60,7 +65,7 @@ export class Controller implements vscode.Disposable {
             return Err(new Error(`Can not find ${questionId}`));
         }
 
-        const cellSampleOutput = question!.samples[index]?.output ?? undefined;
+        const cellSampleOutput = sampleIndex == undefined ? undefined : question!.samples[sampleIndex!]?.output ?? undefined;
         const cellInput = cell.document.getText();
         const { result: runResult, error: runError } = await this.codeRunner.run(codePath, cellInput, cellSampleOutput);
         if (runError) {

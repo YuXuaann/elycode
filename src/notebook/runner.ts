@@ -41,7 +41,7 @@ export class CodeRunner extends Compiler {
         super(compilerConfig);
     }
 
-    async run(codePath: string, input: string, sampleOutput: string | undefined): Promise<Result<string>> {
+    async run(codePath: string, input: string, sampleOutput?: string): Promise<Result<string>> {
         if (!fs.existsSync(codePath)) {
             return Err(new Error(`The code file ${codePath} doesn't exist.`));
         }
@@ -62,10 +62,6 @@ export class CodeRunner extends Compiler {
         const { stdout, stderr } = runResult!;
         if (stderr != '') {
             return utils.RunError(new Error(`The code file ${codePath} run with stderr ${stderr}`));
-        }
-
-        if (!sampleOutput) {
-            return Ok(stdout);
         }
 
         return Ok(func.show(stdout, sampleOutput!));
