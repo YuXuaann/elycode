@@ -32,12 +32,19 @@ export class CompilerConfig {
             .split(/\s+/)
             .map(param => param.trim())
             .filter(Boolean);
+        const mergedParams: string[] = [];
 
-        const mergedParams = [...consts.GCC_EXTRA_PARAMS];
-        for (const param of parsedParams) {
-            if (!mergedParams.includes(param)) {
-                mergedParams.push(param);
-            }
+        switch (languageType) {
+            default:
+            case 'c/cpp':
+                {
+                    mergedParams.push(...consts.GCC_EXTRA_PARAMS);
+                    for (const param of parsedParams) {
+                        if (!mergedParams.includes(param)) {
+                            mergedParams.push(param);
+                        }
+                    }
+                }
         }
 
         this.extraParams = mergedParams;

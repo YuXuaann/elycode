@@ -4,6 +4,7 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as util from 'util';
 import * as utils from '../utils';
+import * as func from './func';
 import { Result, Ok, Err } from "../utils";
 
 const execFileAsync = util.promisify(cp.execFile);
@@ -40,26 +41,33 @@ export class CodeRunner extends Compiler {
         super(compilerConfig);
     }
 
-    async run(codePath: string, input: string): Promise<Result<string>> {
+    async run(codePath: string, input: string, sampleOutput: string | undefined): Promise<Result<string>> {
         if (!fs.existsSync(codePath)) {
             return Err(new Error(`The code file ${codePath} doesn't exist.`));
         }
 
         const { result: executable, error: compileError } = await this.compileToTemp(codePath);
         if (compileError) {
-            return Err(compileError);
+            return utils.CompileError(compileError);
         }
 
-        const { result: runResult, error: runError } = await utils.runWithInput(executable!, input);
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(utils.TimeLimitExceeded(new Error(`Execution exceeded the time limit of ${this.runnerConfig.timeLimitSecond} seconds`))), this.runnerConfig.timeLimitSecond * 1000);
+        const { result: runResult, error: runError } = await utils.runExecutable(executable!, input, controller.signal);
+        clearTimeout(timer);
         if (runError) {
             return Err(runError);
         }
 
         const { stdout, stderr } = runResult!;
         if (stderr != '') {
-            return Err(new Error(`The code file ${codePath} run with stderr ${stderr}`));
+            return utils.RunError(new Error(`The code file ${codePath} run with stderr ${stderr}`));
         }
 
-        return Ok(stdout);
+        if (!sampleOutput) {
+            return Ok(stdout);
+        }
+
+        return Ok(func.show(stdout, sampleOutput!));
     }
 }

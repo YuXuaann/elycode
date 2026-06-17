@@ -4,6 +4,7 @@ import * as runner from './runner';
 import * as config from '../configs';
 import * as path from 'path';
 import * as tree from '../viewer/viewer';
+import { Result, Ok, Err } from '../utils';
 
 export class Controller implements vscode.Disposable {
     private readonly codeRunner: runner.CodeRunner;
@@ -35,31 +36,37 @@ export class Controller implements vscode.Disposable {
         for (const [index, cell] of cells.entries()) {
             const execution = this._controller.createNotebookCellExecution(cell);
             execution.start(Date.now());
-            const resultText = await this._doExecution(index, cell, questionId);
-            execution.replaceOutput([
-                new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(resultText)])
-            ]);
+            const { result, error } = await this._doExecution(index, cell, questionId);
+            let output: vscode.NotebookCellOutput;
+            if (error) {
+                output = new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.stderr(error.message)]);
+            } else {
+                output = new vscode.NotebookCellOutput([new vscode.NotebookCellOutputItem(Buffer.from(result!, 'utf-8'), 'text/markdown')]);
+            }
+            execution.replaceOutput([output]);
             execution.end(true, Date.now());
         }
     }
 
-    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string): Promise<string> {
+    private async _doExecution(index: number, cell: vscode.NotebookCell, questionId: string): Promise<Result<string>> {
         const codePath = path.join(consts.root, `${questionId}.cpp`);
         const { result: contest, error: getContestError } = tree.getContest();
         if (getContestError) {
-            return getContestError.message;
+            return Err(new Error(getContestError.message));
         }
 
         const question = contest!.questions?.find(q => q.id === questionId) ?? undefined;
         if (!question) {
-            return `Can not find ${questionId}`;
+            return Err(new Error(`Can not find ${questionId}`));
         }
 
-        const { result: runResult, error: runError } = await this.codeRunner.run(codePath, question!.samples[index].input);
+        const cellSampleOutput = question!.samples[index]?.output ?? undefined;
+        const cellInput = cell.document.getText();
+        const { result: runResult, error: runError } = await this.codeRunner.run(codePath, cellInput, cellSampleOutput);
         if (runError) {
-            return runError.message;
+            return Err(new Error(runError.message));
         }
 
-        return runResult!;
+        return Ok(runResult!);
     }
 }

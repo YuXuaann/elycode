@@ -31,3 +31,69 @@ export function generateSampleCells(id: number, sample: meta.Sample): serializer
 
     return cells;
 }
+
+function escapeHtml(text: string): string {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+export function show(stdout: string, sampleOutput: string): string {
+    const normalize = (text: string): string => text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    const actual = normalize(stdout).replace(/\n+$/, '');
+    const expected = normalize(sampleOutput).replace(/\n+$/, '');
+
+    const actualLines = actual.length > 0 ? actual.split('\n') : [''];
+    const expectedLines = expected.length > 0 ? expected.split('\n') : [''];
+    const totalLines = Math.max(actualLines.length, expectedLines.length);
+    const statusLine = actual === expected
+        ? '<strong style="color: #50fa7b;">Accept! Congratulation 🎉</strong>'
+        : '<strong style="color: #ff5555;">Wrong Answer</strong>';
+
+    const renderOutputBlock = (title: string, lines: string[], highlightColor: string): string[] => {
+        const header = `<div style="font-weight: 700; margin-bottom: 6px; color: #f8f8f2;">${escapeHtml(title + ':')}</div>`;
+        const block: string[] = [];
+
+        if (totalLines > 0) {
+            const line = lines[0] ?? '';
+            const same = line === (title === 'your output' ? expectedLines[0] : actualLines[0]);
+            const content = escapeHtml(line.length > 0 ? line : '(empty line)');
+            const formattedLine = same
+                ? content
+                : `<span style="color: ${highlightColor};">${content}</span>`;
+
+            block.push(`<div style="padding: 10px; background: #1e1e1e; border-radius: 6px; color: #e5e9f0; font-family: Consolas; white-space: pre-wrap;">${formattedLine}`);
+
+            for (let i = 1; i < totalLines; i++) {
+                const nextLine = lines[i] ?? '';
+                const nextSame = nextLine === (title === 'your output' ? expectedLines[i] : actualLines[i]);
+                const nextContent = escapeHtml(nextLine.length > 0 ? nextLine : '(empty line)');
+                const nextFormattedLine = nextSame
+                    ? nextContent
+                    : `<span style="color: ${highlightColor};">${nextContent}</span>`;
+
+                block.push(nextFormattedLine);
+            }
+
+            block.push('</div>');
+        } else {
+            block.push('<div style="padding: 10px; background: #1e1e1e; border-radius: 6px; color: #e5e9f0; font-family: Consolas; white-space: pre-wrap;">(empty output)</div>');
+        }
+
+        return [header, ...block];
+    };
+
+    const lines: string[] = [
+        statusLine,
+        '',
+        ...renderOutputBlock('your output', actualLines, '#ff6e6e'),
+        '',
+        ...renderOutputBlock('standard output', expectedLines, '#50fa7b'),
+    ];
+
+    return lines.join('\n');
+}
