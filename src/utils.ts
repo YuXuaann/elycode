@@ -1,15 +1,74 @@
-import { execFile, spawn } from 'child_process';
-import { promisify } from 'util';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as cp from 'child_process';
+import * as consts from './consts';
+import * as configs from './configs';
 
-const execFileAsync = promisify(execFile);
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type Result<T> = { result?: T, error?: Error };
+export function Ok<T>(result: T): Result<T> { return { result }; }
+export function Err<T>(error: Error): Result<T> { return { error }; }
 
-export async function compileCpp(sourcePath: string, outputPath: string): Promise<void> {
-    await execFileAsync('g++', [sourcePath, '-std=c++17', '-O2', '-pipe', '-static', '-s', '-o', outputPath]);
+export function WrongAnswer<T>(error: Error): Result<T> { return Err(new Error(`WrongAnswer: ${error.message}`)); }
+export function TimeLimitExceeded<T>(error: Error): Result<T> { return Err(new Error(`TimeLimitExceeded: ${error.message}`)); }
+export function MemoryLimitExceeded<T>(error: Error): Result<T> { return Err(new Error(`MemoryLimitExceeded: ${error.message}`)); } // todo: support MLE
+export function CompileError<T>(error: Error): Result<T> { return Err(new Error(`CompileError: ${error.message}`)); }
+export function RunError<T>(error: Error): Result<T> { return Err(new Error(`RunError: ${error.message}`)); }
+
+export function detectGccExecutable(): Result<string> {
+    const platform = os.platform();
+    const directories = consts.GCC_DIRECTORIES_BY_PLATFORM[platform] ?? [];
+    const executableNames = consts.GCC_EXECUTABLE_NAMES[platform] ?? ['gcc'];
+
+    const candidates: string[] = [];
+
+    for (const dir of directories) {
+        for (const exe of executableNames) {
+            candidates.push(path.join(dir, exe));
+        }
+    }
+
+    const envPath = process.env.PATH ?? '';
+    for (const dir of envPath.split(path.delimiter).filter(Boolean)) {
+        for (const exe of executableNames) {
+            candidates.push(path.join(dir, exe));
+        }
+    }
+
+    for (const candidate of candidates) {
+        try {
+            if (fs.existsSync(candidate)) {
+                return Ok(path.normalize(candidate));
+            }
+        } catch {
+            // ignore inaccessible paths
+        }
+    }
+
+    const fallback = executableNames.find(name => !name.includes(path.sep));
+    if (fallback) {
+        return Ok(fallback);
+    }
+
+    return Err(new Error('Unable to locate a GCC executable automatically. Please configure a custom compiler path in Elycode settings.'));
 }
 
-export async function runExecutable(executablePath: string, input: string): Promise<{ stdout: string; stderr: string; error?: Error }> {
+export function runExecutable(
+    executablePath: string,
+    input?: string,
+    signal?: AbortSignal,
+): Promise<Result<{ stdout: string; stderr: string }>> {
     return new Promise((resolve) => {
-        const child = spawn(executablePath, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+        const child = cp.spawn(executablePath, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+
+        const handleAbort = () => {
+            if (!child.killed) {
+                child.kill('SIGTERM');
+            }
+        };
+
+        signal?.addEventListener('abort', handleAbort, { once: true });
 
         let stdout = '';
         let stderr = '';
@@ -23,18 +82,29 @@ export async function runExecutable(executablePath: string, input: string): Prom
         });
 
         child.on('error', error => {
-            resolve({ stdout, stderr, error });
-        });
-
-        child.on('close', code => {
-            if (code !== 0) {
-                resolve({ stdout, stderr, error: new Error(stderr || `Runtime Error (exit code ${code})`) });
-                return;
+            if (error) {
+                return resolve(RunError(error));
             }
 
-            resolve({ stdout, stderr });
+            return resolve(Ok({ stdout, stderr }));
         });
 
-        child.stdin.end(input);
+        child.on('close', (code, sig) => {
+            signal?.removeEventListener('abort', handleAbort);
+
+            if (sig === 'SIGTERM') {
+                return resolve(TimeLimitExceeded(new Error(`Execution exceeded ${configs.elycodeConfig.runnerConfig?.timeLimitSecond} seconds.`)));
+            }
+
+            if (code !== 0) {
+                return resolve(RunError(new Error(stderr || `exit code ${code}`)));
+            }
+
+            return resolve(Ok({ stdout, stderr }));
+        });
+
+        if (input) {
+            child.stdin.end(input);
+        }
     });
 }

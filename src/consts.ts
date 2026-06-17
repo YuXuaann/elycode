@@ -1,0 +1,99 @@
+import path from 'path';
+import * as vscode from 'vscode';
+
+export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
+export const elycodeDir = path.join(root, '.elycode');
+
+export enum configs {
+    compilerDetectMode = 'compilerMode',
+    compilerCustomPath = 'compilerCustomPath',
+    compileExtraParams = 'compileExtraParams',
+    temporaryPath = 'temporaryPath',
+    runningTimeLimit = 'runningTimeLimit',
+    runningMemoryLimit = 'runningMemoryLimit',
+    templateMode = 'templateMode',
+    customTemplate = 'customTemplate',
+}
+
+export enum commands {
+    elycodeHello = 'elycode.hello',
+    openWorkspace = 'elycode.openWorkspace',
+    openContest = 'elycode.openContest',
+    reloadContest = 'elycode.reloadContest',
+    sidebarView = 'elycode.sidebarView',
+    notebook = 'elycode.notebook',
+    codingWindow = 'elycode.codingWindow',
+    updateContestName = 'elycode.updateContestName',
+}
+
+export const AUTO_CODE_TEMPLATE = `#include<bits/stdc++.h>
+typedef long long ll;
+
+const int N = 2e5 + 5;
+
+void solve() {
+
+}
+
+signed main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    std::cout.tie(nullptr);
+
+    int T = 1;
+    std::cin >> T;
+    while(T--) {
+        solve();
+    }
+
+    return 0;
+}
+`;
+
+export const CONTEST_RECORD = '.elycode.json';
+export const CONTEST_SAMPLE = '.elynote';
+export const CONTEST_PROBLEMS_API_BASE = "https://www.luogu.com.cn/problem";
+
+export const CODEFORCES_HOSTS = new Set<string>([
+    'codeforces.com',
+    'm1.codeforces.com',
+    'm2.codeforces.com',
+    'm3.codeforces.com',
+]);
+export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
+export const CODEFORCES_STANDINGS = 'contest.standings';
+
+export const GCC_DIRECTORIES_BY_PLATFORM: Record<NodeJS.Platform, string[]> = {
+    aix: [],
+    android: [],
+    cygwin: ['C:/cygwin64/bin'],
+    darwin: ['/usr/bin', '/usr/local/bin', '/opt/homebrew/bin', '/opt/local/bin'],
+    freebsd: ['/usr/bin', '/usr/local/bin'],
+    haiku: [],
+    linux: ['/usr/bin', '/usr/local/bin', '/bin', '/usr/sbin'],
+    netbsd: ['/usr/bin', '/usr/local/bin'],
+    openbsd: ['/usr/bin', '/usr/local/bin'],
+    sunos: ['/usr/bin', '/usr/local/bin'],
+    win32: [
+        'C:/msys64/usr/bin',
+        'C:/mingw64/bin',
+        'C:/Program Files/mingw-w64/bin',
+        'C:/Program Files (x86)/mingw-w64/bin'
+    ]
+};
+
+export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {
+    win32: ['gcc.exe', 'x86_64-w64-mingw32-gcc.exe'],
+    aix: ['gcc'],
+    android: ['gcc'],
+    cygwin: ['gcc'],
+    darwin: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    freebsd: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    haiku: ['gcc'],
+    linux: ['gcc', 'gcc-13', 'gcc-12', 'gcc-11', 'cc'],
+    netbsd: ['gcc', 'cc'],
+    openbsd: ['gcc', 'cc'],
+    sunos: ['gcc', 'cc']
+};
+
+export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++'];
