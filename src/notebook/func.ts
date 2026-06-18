@@ -4,10 +4,30 @@ import * as vscode from 'vscode';
 
 export function generateQuestionCell(question: meta.Question): serializer.RawNotebookCell {
     const description = (question.desription ?? '').replace(/\$\$\$/g, '\n$$$$');
+    const formatInput = (question.formatInput ?? '').replace(/\$\$\$/g, '\n$$$$');
+    const formatOutput = (question.formatOutput ?? '').replace(/\$\$\$/g, '\n$$$$');
+    const hint = (question.hint ?? '').replace(/\$\$\$/g, '\n$$$$');
+
+    const sources = [`### ${question.name}`];
+    if (description) {
+        sources.push(description);
+    }
+    if (formatInput) {
+        sources.push(`#### Input`);
+        sources.push(formatInput);
+    }
+    if (formatOutput) {
+        sources.push(`#### Output`);
+        sources.push(formatOutput);
+    }
+    if (hint) {
+        sources.push(`#### Note`);
+        sources.push(hint);
+    }
 
     return {
         type: vscode.NotebookCellKind.Markup,
-        source: [`#### ${question.name}`, description],
+        source: sources,
         meta: new serializer.RawNoteBookCellMeta(),
     };
 }

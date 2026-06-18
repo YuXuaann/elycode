@@ -97,4 +97,4 @@ export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {
     sunos: ['gcc', 'cc']
 };
 
-export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++'];
+export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++', '-lm'];

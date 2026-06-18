@@ -41,6 +41,9 @@ export class Question {
         public readonly type: QuestionType,
         public samples: Sample[],
         public statics: Statics,
+        public readonly formatInput?: string,
+        public readonly formatOutput?: string,
+        public readonly hint?: string,
     ) { }
 }
 

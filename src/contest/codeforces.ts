@@ -55,12 +55,11 @@ export class Codeforces implements contest.Contest {
                 const title = problem.index && problem.name
                     ? `${problem.index}. ${problem.name}`
                     : problem.name ?? problem.index ?? 'Unknown Problem';
-                const { result, error } = await fetchQuestionInfoWithName(cfMeta.id, questionId, problem.name ?? '');
+                const { result, error } = await fetchProblemWithName(cfMeta.id, questionId, problem.name ?? '');
                 if (error) {
                     console.warn(error);
                 }
-                const description = result?.description ?? '';
-                const samples = result?.samples ?? [];
+                const { samples, description, formatInput, formatOutput, hint } = getResultFromProblem(result);
                 const question = new meta.Question(
                     questionId,
                     title,
@@ -68,6 +67,9 @@ export class Codeforces implements contest.Contest {
                     'normal',
                     samples,
                     new meta.Statics(),
+                    formatInput,
+                    formatOutput,
+                    hint
                 );
                 question.statics.points = problem.points ? `${problem.points} pts` : undefined;
                 questions.push(question);
@@ -98,17 +100,21 @@ export async function getProblems(contestId: string, id: string): Promise<Result
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getResultFromProblem(problem: any): Result<{ samples: meta.Sample[]; description: string }> {
+function getResultFromProblem(problem: any): { samples: meta.Sample[]; description: string; formatInput: string; formatOutput: string; hint: string; } {
     const problemSamples: string[][] = problem!.samples ?? [];
     const description: string = problem!.content?.description ?? '';
+    const formatInput: string = problem!.content?.formatI ?? '';
+    const formatOutput: string = problem!.content?.formatO ?? '';
+    const hint: string = problem!.content?.hint ?? '';
     const samples = problemSamples.map((sample: string[]) => {
         const [input = '', output = ''] = sample;
         return new meta.Sample(input, output);
     });
-    return Ok({ samples, description });
+    return { samples, description, formatInput, formatOutput, hint };
 }
 
-export async function fetchQuestionInfoWithName(contestId: string, id: string, name: string): Promise<Result<{ samples: meta.Sample[]; description: string }>> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function fetchProblemWithName(contestId: string, id: string, name: string): Promise<Result<any>> {
     const numericContestId = Number(contestId);
     if (Number.isNaN(numericContestId)) {
         return Err(new Error(`Codeforces fetch problems Error with Invalid contestID: ${contestId}`));
@@ -116,7 +122,7 @@ export async function fetchQuestionInfoWithName(contestId: string, id: string, n
 
     const { result: problem, error } = await getProblems(contestId, id);
     if (!error || name === '') {
-        return getResultFromProblem(problem);
+        return Ok(problem);
     }
 
     console.warn(`Problem ${id} not found in contest ${contestId}, trying adjacent contests...`);
@@ -145,7 +151,7 @@ export async function fetchQuestionInfoWithName(contestId: string, id: string, n
             }
 
             if (name === luoguProblem.name) {
-                return getResultFromProblem(luoguProblem);
+                return Ok(luoguProblem);
             }
         }
     }
