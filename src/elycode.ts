@@ -5,6 +5,7 @@ import * as consts from './consts';
 import * as serializer from './notebook/serializer';
 import * as controller from './notebook/controller';
 import * as configs from './configs';
+import * as treeItem from './viewer/treeItem';
 
 function config() {
 	const config = vscode.workspace.getConfiguration('elycode');
@@ -29,7 +30,7 @@ function registerCommands() {
 	vscode.commands.registerCommand(consts.commands.elycodeHello, cmd.elycodeHello);
 	vscode.commands.registerCommand(consts.commands.openWorkspace, cmd.openWorkspace);
 	vscode.commands.registerCommand(consts.commands.addContest, cmd.addContest);
-	vscode.commands.registerCommand(consts.commands.deleteContest, cmd.deleteContest);
+	vscode.commands.registerCommand(consts.commands.deleteContest, (item: treeItem.Item) => { cmd.deleteContest(item.contestId!); });
 	vscode.commands.registerCommand(consts.commands.codingWindow, cmd.codingWindow);
 }
 

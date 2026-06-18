@@ -31,6 +31,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
         switch (element.type) {
             case item.ItemType.AddContest:
                 return new item.TreeItem(
+                    item.ItemType.AddContest,
                     'Add a competition.',
                     vscode.TreeItemCollapsibleState.None,
                     'add',
@@ -40,6 +41,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
             case item.ItemType.Contest: {
                 const contest = this.contests.get(element.contestId!);
                 return new item.TreeItem(
+                    item.ItemType.Contest,
                     contest?.meta.name ?? 'Unknown Contest',
                     vscode.TreeItemCollapsibleState.Expanded,
                     'list-unordered'
@@ -49,6 +51,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                 const contest = this.contests.get(element.contestId!);
                 const question = contest?.questions.find((q) => (q.id === element.questionId!));
                 return new item.TreeItem(
+                    item.ItemType.Question,
                     question?.name ?? 'Unknown Question',
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
@@ -57,9 +60,9 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                 );
             }
             case item.ItemType.ErrorMessage:
-                return new item.TreeItem("Elycode run with error", vscode.TreeItemCollapsibleState.None);
+                return new item.TreeItem(item.ItemType.ErrorMessage, "Elycode run with error", vscode.TreeItemCollapsibleState.None);
             default:
-                return new item.TreeItem('Unknown Item', vscode.TreeItemCollapsibleState.None);
+                return new item.TreeItem(item.ItemType.ErrorMessage, 'Unknown Item', vscode.TreeItemCollapsibleState.None);
         }
     }
 
@@ -82,7 +85,9 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
             this.contests!.forEach((contest, _) => {
                 items.push(new item.Item(item.ItemType.Contest, undefined, contest.meta.id));
             });
-            items.push(item.Item.AddContest);
+            if (items.length === 0) {
+                items.push(item.Item.AddContest);
+            }
             return items;
         }
 

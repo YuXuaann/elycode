@@ -79,11 +79,9 @@ export async function deleteContest(contestId: string) {
     }
 
     try {
-        const removedFiles = cppFiles.map((file) => path.join(consts.root!, contest!.meta.name, file));
-        for (const filePath of removedFiles) {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+        const removedCppDir = path.join(consts.root!, contest!.meta.name);
+        if (fs.existsSync(removedCppDir)) {
+            fs.rmSync(removedCppDir, { recursive: true, force: true });
         }
         const removedRecord = path.join(consts.elycodeDir, contest!.meta.name);
         if (fs.existsSync(removedRecord)) {
@@ -135,4 +133,8 @@ export async function codingWindow(contestId: string, questionId: string) {
     const notebookUri = vscode.Uri.file(notebookPath);
     const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
     await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
+}
+
+export function refresh() {
+    vscode.window.showInformationMessage('Contest infomation updated.');
 }

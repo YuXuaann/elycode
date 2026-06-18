@@ -20,6 +20,33 @@
 				"command": "elycode.hello",
 				"title": "elycode: doctor",
 				"shortTitle": "elycode: doctor"
+			},
+			{
+				"command": "elycode.refresh",
+				"title": "Refresh",
+				"shortTitle": "Refresh",
+				"icon": {
+					"dark": "media/dark/refresh.svg",
+					"light": "media/light/refresh.svg"
+				}
+			},
+			{
+				"command": "elycode.addContest",
+				"title": "Add Contest",
+				"shortTitle": "Add Contest",
+				"icon": {
+					"dark": "media/dark/addContest.svg",
+					"light": "media/light/addContest.svg"
+				}
+			},
+			{
+				"command": "elycode.deleteContest",
+				"title": "Delete Contest",
+				"shortTitle": "Delete Contest",
+				"icon": {
+					"dark": "media/dark/delete.svg",
+					"light": "media/light/delete.svg"
+				}
 			}
 		],
 		"notebooks": [
@@ -33,6 +60,27 @@
 				]
 			}
 		],
+		"menus": {
+			"view/title": [
+				{
+					"command": "elycode.refresh",
+					"when": "view == elycode.sidebarView",
+					"group": "navigation"
+				},
+				{
+					"command": "elycode.addContest",
+					"when": "view == elycode.sidebarView",
+					"group": "navigation"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "elycode.deleteContest",
+					"when": "view == elycode.sidebarView && viewItem == Contest",
+					"group": "inline"
+				}
+			]
+		},
 		"viewsContainers": {
 			"activitybar": [
 				{

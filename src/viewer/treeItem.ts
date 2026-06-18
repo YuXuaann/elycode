@@ -27,6 +27,7 @@ export class Item {
 
 export class TreeItem extends vscode.TreeItem {
     constructor(
+        public readonly contextValue: string,
         public readonly label: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly icon?: string,
@@ -34,10 +35,11 @@ export class TreeItem extends vscode.TreeItem {
         command?: vscode.Command,
     ) {
         super(label, collapsibleState);
+        this.iconPath = icon ? new vscode.ThemeIcon(icon) : undefined;
+        this.description = description;
+        this.contextValue = contextValue;
         if (command) {
             this.command = command;
         }
-        this.iconPath = icon ? new vscode.ThemeIcon(icon) : undefined;
-        this.description = description;
     }
 }

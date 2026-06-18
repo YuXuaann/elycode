@@ -18,6 +18,7 @@ export enum configs {
 export enum commands {
     elycodeHello = 'elycode.hello',
     openWorkspace = 'elycode.openWorkspace',
+    refresh = 'elycode.refresh',
     addContest = 'elycode.addContest',
     deleteContest = 'elycode.deleteContest',
     sidebarView = 'elycode.sidebarView',
