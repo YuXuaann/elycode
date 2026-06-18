@@ -45,10 +45,16 @@ function escapeHtml(text: string): string {
 }
 
 export function show(stdout: string, sampleOutput?: string): string {
-    const normalize = (text: string): string => text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const normalize = (text: string): string => text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .map((line) => line.replace(/[ \t]+$/, ''))
+        .join('\n')
+        .replace(/\n+$/, '');
 
-    const actual = normalize(stdout).replace(/\n+$/, '');
-    const expected = normalize(sampleOutput ?? '').replace(/\n+$/, '');
+    const actual = normalize(stdout);
+    const expected = normalize(sampleOutput ?? '');
 
     const actualLines = actual.length > 0 ? actual.split('\n') : [''];
     const expectedLines = expected.length > 0 ? expected.split('\n') : [''];

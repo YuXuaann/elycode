@@ -18,8 +18,8 @@ export enum configs {
 export enum commands {
     elycodeHello = 'elycode.hello',
     openWorkspace = 'elycode.openWorkspace',
-    openContest = 'elycode.openContest',
-    reloadContest = 'elycode.reloadContest',
+    addContest = 'elycode.addContest',
+    deleteContest = 'elycode.deleteContest',
     sidebarView = 'elycode.sidebarView',
     notebook = 'elycode.notebook',
     codingWindow = 'elycode.codingWindow',
@@ -51,7 +51,7 @@ signed main() {
 `;
 
 export const CONTEST_RECORD = '.elycode.json';
-export const CONTEST_SAMPLE = '.elynote';
+export const QUESTION_NOTE = '.elynote';
 export const CONTEST_PROBLEMS_API_BASE = "https://www.luogu.com.cn/problem";
 
 export const CODEFORCES_HOSTS = new Set<string>([

@@ -15,6 +15,7 @@ export interface RawNotebookCell {
 
 export class RawNoteBookMeta {
     constructor(
+        public readonly contestId?: string,
         public readonly questionId?: string,
     ) { }
 }

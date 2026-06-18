@@ -28,8 +28,8 @@ function config() {
 function registerCommands() {
 	vscode.commands.registerCommand(consts.commands.elycodeHello, cmd.elycodeHello);
 	vscode.commands.registerCommand(consts.commands.openWorkspace, cmd.openWorkspace);
-	vscode.commands.registerCommand(consts.commands.openContest, cmd.openContest);
-	vscode.commands.registerCommand(consts.commands.reloadContest, cmd.reloadContest);
+	vscode.commands.registerCommand(consts.commands.addContest, cmd.addContest);
+	vscode.commands.registerCommand(consts.commands.deleteContest, cmd.deleteContest);
 	vscode.commands.registerCommand(consts.commands.codingWindow, cmd.codingWindow);
 }
 

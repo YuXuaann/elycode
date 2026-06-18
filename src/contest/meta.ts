@@ -1,3 +1,5 @@
+import * as contest from "./contest";
+
 // todo: export type ContestPlatform = 'Codeforces' | 'AtCoder' | 'LeetCode' | 'HackerRank' | 'CodeChef' | undefined;
 export type Platform = 'Codeforces' | undefined; // for now, we only support Codeforces
 type QuestionType = 'normal' | 'interactive';
@@ -39,5 +41,11 @@ export class Question {
         public readonly type: QuestionType,
         public samples: Sample[],
         public statics: Statics,
+    ) { }
+}
+
+export class Record {
+    constructor(
+        public contests: contest.Contest[]
     ) { }
 }
