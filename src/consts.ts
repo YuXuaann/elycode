@@ -27,7 +27,8 @@ export enum commands {
     notebook = 'elycode.notebook',
     codingWindow = 'elycode.codingWindow',
     updateContestName = 'elycode.updateContestName',
-    openSubmission = 'elycode.openSubmission',
+    openURL = 'elycode.openURL',
+    openSubmitPage = 'elycode.openSubmitPage',
 }
 
 export const AUTO_CODE_TEMPLATE = `#include<bits/stdc++.h>

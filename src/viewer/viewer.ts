@@ -67,7 +67,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                     vscode.TreeItemCollapsibleState.None,
                     contest.passed(commit) ? 'issue-closed' : undefined,
                     `time: ${commit.timeConsumedMillis}ms memory:${commit.memoryConsumedBytes}B at ${commit.timestamp}`,
-                    { command: consts.commands.openSubmission, title: 'Open submission', arguments: [commit.code] },
+                    { command: consts.commands.openURL, title: 'Open submission', arguments: [commit.code] },
                 );
             }
             case item.ItemType.ErrorMessage:

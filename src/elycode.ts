@@ -37,7 +37,8 @@ function registerCommands() {
 	vscode.commands.registerCommand(consts.commands.deleteContest, (item: treeItem.Item) => { cmd.deleteContest(item.contestId!); });
 	vscode.commands.registerCommand(consts.commands.codingWindow, cmd.codingWindow);
 	vscode.commands.registerCommand(consts.commands.refresh, cmd.refresh);
-	vscode.commands.registerCommand(consts.commands.openSubmission, (url?: string) => { void cmd.openSubmission(url); });
+	vscode.commands.registerCommand(consts.commands.openURL, (url?: string) => { void cmd.openURL(url); });
+	vscode.commands.registerCommand(consts.commands.openSubmitPage, (item: treeItem.Item) => { void cmd.openSubmitPage(item); });
 }
 
 function startBackgroundTasks(context: vscode.ExtensionContext) {

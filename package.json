@@ -49,9 +49,18 @@
 				}
 			},
 			{
-				"command": "elycode.openSubmission",
-				"title": "Open Submission",
-				"shortTitle": "Open Submission"
+				"command": "elycode.openURL",
+				"title": "Open specified URL",
+				"shortTitle": "Open specified URL"
+			},
+			{
+				"command": "elycode.openSubmitPage",
+				"title": "Open submit page",
+				"shortTitle": "Open submit page",
+				"icon": {
+					"dark": "media/dark/openSubmission.svg",
+					"light": "media/light/openSubmission.svg"
+				}
 			}
 		],
 		"notebooks": [
@@ -82,6 +91,11 @@
 				{
 					"command": "elycode.deleteContest",
 					"when": "view == elycode.sidebarView && viewItem == Contest",
+					"group": "inline"
+				},
+				{
+					"command": "elycode.openSubmitPage",
+					"when": "view == elycode.sidebarView && viewItem == Question",
 					"group": "inline"
 				}
 			]

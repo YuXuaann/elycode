@@ -6,6 +6,7 @@ import * as meta from './contest/meta';
 import * as tree from './viewer/viewer';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as treeItem from './viewer/treeItem';
 
 export async function openWorkspace() {
     const selected = await vscode.window.showOpenDialog({
@@ -136,7 +137,7 @@ export async function codingWindow(contestId: string, questionId: string) {
     await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
 }
 
-export async function openSubmission(url?: string) {
+export async function openURL(url?: string) {
     if (!url) {
         vscode.window.showWarningMessage('Submission link is unavailable.');
         return;
@@ -149,6 +150,23 @@ export async function openSubmission(url?: string) {
         const message = error instanceof Error ? error.message : String(error);
         vscode.window.showErrorMessage(`Failed to open submission: ${message}`);
     }
+}
+
+export async function openSubmitPage(item: treeItem.Item) {
+    const contestId = item.contestId!;
+    const { result: contest, error } = tree.getContest(contestId);
+    if (error) {
+        console.error(error);
+        return;
+    }
+    let url = '';
+    switch (contest!.meta.platform) {
+        case meta.Platform.Codeforces:
+            url = `https://codeforces.com/contest/${contestId}/submit`;
+            break;
+        default:
+    }
+    return openURL(url);
 }
 
 function refill(platform: meta.Platform, commits: meta.Commit[], fetched: Map<meta.Platform, Map<string, Map<string, meta.Commit[]>>>) {
