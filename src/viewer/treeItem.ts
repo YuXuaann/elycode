@@ -1,17 +1,20 @@
 import * as vscode from 'vscode';
+import * as meta from '../contest/meta';
 
 export enum ItemType {
     AddContest = 'AddContest',
     Contest = 'Contest',
     Question = 'Question',
+    Statistics = 'Statistics',
     ErrorMessage = 'errorMessage'
 }
 
 export class Item {
     constructor(
         public readonly type: ItemType,
+        public contestId?: string,
         public questionId?: string,
-        public contestId?: string
+        public commit?: meta.Commit,
     ) {
         if (type === ItemType.Question && !questionId) {
             throw new Error('Question item must have a questionId');

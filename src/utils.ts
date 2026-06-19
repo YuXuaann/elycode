@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import * as consts from './consts';
 import * as configs from './configs';
+import * as vscode from 'vscode';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type Result<T> = { result?: T, error?: Error };
@@ -107,4 +108,49 @@ export function runExecutable(
             child.stdin.end(input);
         }
     });
+}
+
+
+interface BackgroundTaskOptions {
+    runImmediately?: boolean;
+    onSuccess?: () => void;
+    onError?: (error: unknown) => void;
+}
+
+export function startBackgroundTask(
+    context: vscode.ExtensionContext,
+    intervalMs: number,
+    task: () => Promise<void>,
+    options: BackgroundTaskOptions = {}
+): NodeJS.Timeout {
+    let running = false;
+    const handleError = options.onError ?? ((error: unknown) => console.error('Background task error:', error));
+
+    const execute = async () => {
+        if (running) {
+            return;
+        }
+
+        running = true;
+        try {
+            await task();
+            options.onSuccess?.();
+        } catch (error) {
+            handleError(error);
+        } finally {
+            running = false;
+        }
+    };
+
+    if (options.runImmediately) {
+        void execute();
+    }
+
+    const timer = setInterval(() => {
+        void execute();
+    }, intervalMs);
+
+    context.subscriptions.push({ dispose: () => clearInterval(timer) });
+
+    return timer;
 }

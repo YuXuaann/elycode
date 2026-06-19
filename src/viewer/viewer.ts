@@ -36,7 +36,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                     vscode.TreeItemCollapsibleState.None,
                     'add',
                     undefined,
-                    { command: consts.commands.addContest, title: 'Add Contest', arguments: [] }
+                    { command: consts.commands.addContest, title: 'Add Contest' }
                 );
             case item.ItemType.Contest: {
                 const contest = this.contests.get(element.contestId!);
@@ -53,10 +53,21 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                 return new item.TreeItem(
                     item.ItemType.Question,
                     question?.name ?? 'Unknown Question',
-                    vscode.TreeItemCollapsibleState.None,
+                    vscode.TreeItemCollapsibleState.Expanded,
                     undefined,
-                    question?.statics.points ? question.statics.points : undefined,
+                    question?.statistics.points ? question.statistics.points : undefined,
                     { command: consts.commands.codingWindow, title: 'Open Coding Window', arguments: [element.contestId!, question?.id ?? ''] }
+                );
+            }
+            case item.ItemType.Statistics: {
+                const commit = element.commit!;
+                return new item.TreeItem(
+                    item.ItemType.Statistics,
+                    contest.passed(commit) ? `Accept!` : `Wrong`,
+                    vscode.TreeItemCollapsibleState.None,
+                    contest.passed(commit) ? 'issue-closed' : undefined,
+                    `time: ${commit.timeConsumedMillis}ms memory:${commit.memoryConsumedBytes}B at ${commit.timestamp}`,
+                    { command: consts.commands.openSubmission, title: 'Open submission', arguments: [commit.code] },
                 );
             }
             case item.ItemType.ErrorMessage:
@@ -83,7 +94,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
 
             const items: item.Item[] = [];
             this.contests!.forEach((contest, _) => {
-                items.push(new item.Item(item.ItemType.Contest, undefined, contest.meta.id));
+                items.push(new item.Item(item.ItemType.Contest, contest.meta.id));
             });
             if (items.length === 0) {
                 items.push(item.Item.AddContest);
@@ -94,9 +105,17 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
         switch (element!.type) {
             case item.ItemType.Contest: {
                 const contest = this.contests.get(element.contestId!);
-                return contest?.questions.map((q) => new item.Item(item.ItemType.Question, q.id, element.contestId!)) ?? [];
+                return contest?.questions.map((q) => new item.Item(item.ItemType.Question, element.contestId!, q.id)) ?? [];
             }
-            case item.ItemType.Question:
+            case item.ItemType.Question: {
+                const contest = this.contests.get(element.contestId!);
+                const question = contest?.questions.find((q) => q.id === element.questionId!);
+                const historys = question?.statistics.historys;
+                if (Array.isArray(historys)) {
+                    return historys.map((commit) => new item.Item(item.ItemType.Statistics, element.contestId!, element.questionId!, commit));
+                }
+                return [];
+            }
             default:
                 return [item.Item.ErrorMessage];
         }

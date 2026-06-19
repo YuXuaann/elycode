@@ -5,6 +5,7 @@ import * as consts from './consts';
 import * as serializer from './notebook/serializer';
 import * as controller from './notebook/controller';
 import * as configs from './configs';
+import * as utils from './utils';
 import * as treeItem from './viewer/treeItem';
 
 function config() {
@@ -17,11 +18,14 @@ function config() {
 	const runningMemoryLimit = config.get<number>(consts.configs.runningMemoryLimit, 256);
 	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
 	const customTemplate = config.get<string>(consts.configs.customTemplate, '');
+	const codeforcesUserName = config.get<string>(consts.configs.codeforcesUserName, '');
+	const updateContestInfoIntervalSecond = config.get<number>(consts.configs.updateContestInfoIntervalSecond, 60);
 
 	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
 	if (error) {
 		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}`);
 	}
+	configs.elycodeConfig.platformConfig = new configs.PlatformConfig(codeforcesUserName, updateContestInfoIntervalSecond);
 	configs.elycodeConfig.compilerConfig = result!;
 	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
 }
@@ -32,7 +36,23 @@ function registerCommands() {
 	vscode.commands.registerCommand(consts.commands.addContest, cmd.addContest);
 	vscode.commands.registerCommand(consts.commands.deleteContest, (item: treeItem.Item) => { cmd.deleteContest(item.contestId!); });
 	vscode.commands.registerCommand(consts.commands.codingWindow, cmd.codingWindow);
+	vscode.commands.registerCommand(consts.commands.refresh, cmd.refresh);
+	vscode.commands.registerCommand(consts.commands.openSubmission, (url?: string) => { void cmd.openSubmission(url); });
 }
+
+function startBackgroundTasks(context: vscode.ExtensionContext) {
+	// refresh task
+	utils.startBackgroundTask(
+		context,
+		configs.elycodeConfig!.platformConfig!.updateContestInfoIntervalSecond * 1000,
+		async () => { await cmd.updateQuestionsStatistics(); },
+		{
+			onSuccess: () => tree.getTree().sync(),
+			onError: (error) => console.error('Failed to auto refresh contest information:', error),
+		}
+	);
+}
+
 
 export async function activate(context: vscode.ExtensionContext) {
 	console.log('elycode is now active!');
@@ -45,4 +65,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	components.push(await controller.Controller.new());
 	components.push(vscode.window.registerTreeDataProvider(consts.commands.sidebarView, tree.getTree()));
 	context.subscriptions.push(...components);
+
+	startBackgroundTasks(context);
 }
