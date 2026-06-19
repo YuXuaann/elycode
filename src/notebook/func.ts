@@ -80,11 +80,11 @@ export function show(stdout: string, sampleOutput?: string): string {
     const expectedLines = expected.length > 0 ? expected.split('\n') : [''];
     const totalLines = Math.max(actualLines.length, expectedLines.length);
     const statusLine = actual === expected
-        ? '<strong style="color: #50fa7b;">Accept! Congratulation 🎉</strong>'
-        : '<strong style="color: #ff5555;">Wrong Answer</strong>';
+        ? '<strong style="color: var(--vscode-testing-iconPassed, #50fa7b);">Accept! Congratulation 🎉</strong>'
+        : '<strong style="color: var(--vscode-testing-iconFailed, #ff5555);">Wrong Answer</strong>';
 
     const renderOutputBlock = (title: string, lines: string[], highlightColor: string): string[] => {
-        const header = `<div style="font-weight: 700; margin-bottom: 6px; color: #f8f8f2;">${escapeHtml(title + ':')}</div>`;
+        const header = `<div style="font-weight: 600; margin-bottom: 6px; color: var(--vscode-descriptionForeground, #555);">${escapeHtml(title + ':')}</div>`;
         const block: string[] = [];
 
         if (totalLines > 0) {
@@ -95,7 +95,7 @@ export function show(stdout: string, sampleOutput?: string): string {
                 ? content
                 : `<span style="color: ${highlightColor};">${content}</span>`;
 
-            block.push(`<div style="padding: 10px; background: #1e1e1e; border-radius: 6px; color: #e5e9f0; font-family: Consolas; white-space: pre-wrap;">${formattedLine}`);
+            block.push(`<div style="padding: 10px; background: var(--vscode-notebook-cellEditorBackground, var(--vscode-editor-background, #f5f5f5)); border-radius: 6px; color: var(--vscode-editor-foreground, #111); font-family: Consolas, 'Courier New', monospace; white-space: pre-wrap; border: 1px solid var(--vscode-editorWidget-border, transparent);">${formattedLine}`);
 
             for (let i = 1; i < totalLines; i++) {
                 const nextLine = lines[i] ?? '';
@@ -110,21 +110,21 @@ export function show(stdout: string, sampleOutput?: string): string {
 
             block.push('</div>');
         } else {
-            block.push('<div style="padding: 10px; background: #1e1e1e; border-radius: 6px; color: #e5e9f0; font-family: Consolas; white-space: pre-wrap;">(empty output)</div>');
+            block.push('<div style="padding: 10px; background: var(--vscode-notebook-cellEditorBackground, var(--vscode-editor-background, #f5f5f5)); border-radius: 6px; color: var(--vscode-editor-foreground, #111); font-family: Consolas, \'Courier New\', monospace; white-space: pre-wrap; border: 1px solid var(--vscode-editorWidget-border, transparent);">(empty output)</div>');
         }
 
         return [header, ...block];
     };
 
     if (!sampleOutput) {
-        return renderOutputBlock('your output', actualLines, '#e5e9f0').join('\n');
+        return renderOutputBlock('your output', actualLines, 'var(--vscode-testing-iconSkipped, var(--vscode-editor-foreground, #666))').join('\n');
     }
 
     return [
         statusLine,
         '',
-        ...renderOutputBlock('your output', actualLines, '#ff6e6e'),
+        ...renderOutputBlock('your output', actualLines, 'var(--vscode-testing-iconFailed, #ff6e6e)'),
         '',
-        ...renderOutputBlock('standard output', expectedLines, '#50fa7b'),
+        ...renderOutputBlock('standard output', expectedLines, 'var(--vscode-testing-iconPassed, #50fa7b)'),
     ].join('\n');
 }
