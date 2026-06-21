@@ -46,7 +46,7 @@ export async function addContest() {
         tree.addContest(contest);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to load contest: ${message}`);
+        vscode.window.showErrorMessage(`Failed to load contest: ${message}.`);
     }
 }
 
@@ -58,7 +58,7 @@ export async function deleteContest(contestId: string) {
 
     const { result: contest, error } = tree.getContest(contestId);
     if (error) {
-        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}.`);
         return;
     }
 
@@ -93,19 +93,19 @@ export async function deleteContest(contestId: string) {
         vscode.window.showInformationMessage('Contest and generated files removed.');
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to delete contest: ${message}`);
+        vscode.window.showErrorMessage(`Failed to delete contest: ${message}.`);
     }
 }
 
 export function elycodeHello() {
     // todo: add doctor
-    vscode.window.showInformationMessage('elycode works normally');
+    vscode.window.showInformationMessage('elycode works normally.');
 }
 
 export async function codingWindow(contestId: string, questionId: string) {
     const { result: contest, error } = tree.getContest(contestId);
     if (error) {
-        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}.`);
         return;
     }
 
@@ -126,7 +126,7 @@ export async function codingWindow(contestId: string, questionId: string) {
         fs.mkdirSync(notebookDir, { recursive: true });
         const { result: notebook, error } = tree.getNotebook(contestId);
         if (error) {
-            vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}`);
+            vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}.`);
             return;
         }
         const content = notebook!.generate(questionId);
@@ -148,7 +148,7 @@ export async function openURL(url?: string) {
         await vscode.env.openExternal(uri);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to open submission: ${message}`);
+        vscode.window.showErrorMessage(`Failed to open submission: ${message}.`);
     }
 }
 
@@ -214,6 +214,7 @@ export async function updateQuestionsStatistics() {
                 {
                     const username = configs.elycodeConfig!.platformConfig!.codeforcesUserName;
                     if (!username) {
+                        vscode.window.showErrorMessage("Please set Codeforces user name at vscode config.");
                         continue;
                     }
                     const result = fetched.get(meta.Platform.Codeforces);
@@ -245,7 +246,13 @@ export async function updateQuestionsStatistics() {
 }
 
 export async function refresh() {
-    await updateQuestionsStatistics();
-    tree.getTree().sync();
-    vscode.window.showInformationMessage('Contest infomation updated.');
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Refreshing contest statistics...'
+    }, async () => {
+        await updateQuestionsStatistics();
+        tree.getTree().sync();
+    });
+
+    vscode.window.showInformationMessage('Contest statistics updated.');
 }

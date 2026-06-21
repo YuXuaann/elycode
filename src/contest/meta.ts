@@ -46,6 +46,12 @@ export function passed(commit: Commit): boolean {
         commit.verdict === 'passeed';
 }
 
+export function unDone(commit: Commit): boolean {
+    return commit.verdict === 'TESTING' ||
+        commit.verdict === 'Testing' ||
+        commit.verdict === 'testing';
+}
+
 export class Statistics {
     accepted = false;
     historys: Commit[] = [];
@@ -54,15 +60,19 @@ export class Statistics {
 }
 
 export function update(statistics: Statistics, commit: Commit) {
-    const exists = statistics.historys.some((history) => history.timestamp === commit.timestamp);
-    if (exists) {
+    if (passed(commit)) {
+        statistics.accepted = true;
+    }
+
+    const existedIndex = statistics.historys.findIndex((history) => history.timestamp === commit.timestamp);
+    if (existedIndex !== -1) {
+        if (unDone(statistics.historys[existedIndex])) {
+            statistics.historys[existedIndex] = commit;
+        }
         return;
     }
 
     statistics.historys.push(commit);
-    if (passed(commit)) {
-        statistics.accepted = true;
-    }
 }
 
 export class Question {

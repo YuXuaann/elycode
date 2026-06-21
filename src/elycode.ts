@@ -23,7 +23,7 @@ function config() {
 
 	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
 	if (error) {
-		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}`);
+		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}.`);
 	}
 	configs.elycodeConfig.platformConfig = new configs.PlatformConfig(codeforcesUserName, updateContestInfoIntervalSecond);
 	configs.elycodeConfig.compilerConfig = result!;
