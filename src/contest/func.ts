@@ -40,7 +40,7 @@ export function loadFromLocal(): Result<meta.Record> {
             if (contest.meta?.platform === platform) {
                 const { result, error } = transfer(contest);
                 if (error) {
-                    vscode.window.showErrorMessage(`Failed to load ${platform} contest: ${error.message}`);
+                    vscode.window.showErrorMessage(`Failed to load ${platform} contest: ${error.message}.`);
                 }
                 contests.push(result!);
             }

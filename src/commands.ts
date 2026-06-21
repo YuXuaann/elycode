@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import * as consts from './consts';
 import * as configs from './configs';
 import * as contests from './contest/contest';
+import * as meta from './contest/meta';
 import * as tree from './viewer/viewer';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as treeItem from './viewer/treeItem';
 
 export async function openWorkspace() {
     const selected = await vscode.window.showOpenDialog({
@@ -44,7 +46,7 @@ export async function addContest() {
         tree.addContest(contest);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to load contest: ${message}`);
+        vscode.window.showErrorMessage(`Failed to load contest: ${message}.`);
     }
 }
 
@@ -56,7 +58,7 @@ export async function deleteContest(contestId: string) {
 
     const { result: contest, error } = tree.getContest(contestId);
     if (error) {
-        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}.`);
         return;
     }
 
@@ -79,11 +81,9 @@ export async function deleteContest(contestId: string) {
     }
 
     try {
-        const removedFiles = cppFiles.map((file) => path.join(consts.root!, contest!.meta.name, file));
-        for (const filePath of removedFiles) {
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
+        const removedCppDir = path.join(consts.root!, contest!.meta.name);
+        if (fs.existsSync(removedCppDir)) {
+            fs.rmSync(removedCppDir, { recursive: true, force: true });
         }
         const removedRecord = path.join(consts.elycodeDir, contest!.meta.name);
         if (fs.existsSync(removedRecord)) {
@@ -93,19 +93,19 @@ export async function deleteContest(contestId: string) {
         vscode.window.showInformationMessage('Contest and generated files removed.');
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        vscode.window.showErrorMessage(`Failed to delete contest: ${message}`);
+        vscode.window.showErrorMessage(`Failed to delete contest: ${message}.`);
     }
 }
 
 export function elycodeHello() {
     // todo: add doctor
-    vscode.window.showInformationMessage('elycode works normally');
+    vscode.window.showInformationMessage('elycode works normally.');
 }
 
 export async function codingWindow(contestId: string, questionId: string) {
     const { result: contest, error } = tree.getContest(contestId);
     if (error) {
-        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}`);
+        vscode.window.showErrorMessage(`Contest doesn't exist: ${error}.`);
         return;
     }
 
@@ -126,7 +126,7 @@ export async function codingWindow(contestId: string, questionId: string) {
         fs.mkdirSync(notebookDir, { recursive: true });
         const { result: notebook, error } = tree.getNotebook(contestId);
         if (error) {
-            vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}`);
+            vscode.window.showErrorMessage(`Notebook doesn't exist: ${error}.`);
             return;
         }
         const content = notebook!.generate(questionId);
@@ -135,4 +135,124 @@ export async function codingWindow(contestId: string, questionId: string) {
     const notebookUri = vscode.Uri.file(notebookPath);
     const notebookDoc = await vscode.workspace.openNotebookDocument(notebookUri);
     await vscode.window.showNotebookDocument(notebookDoc, { viewColumn: vscode.ViewColumn.Two, preview: false });
+}
+
+export async function openURL(url?: string) {
+    if (!url) {
+        vscode.window.showWarningMessage('Submission link is unavailable.');
+        return;
+    }
+
+    try {
+        const uri = vscode.Uri.parse(url);
+        await vscode.env.openExternal(uri);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        vscode.window.showErrorMessage(`Failed to open submission: ${message}.`);
+    }
+}
+
+export async function openSubmitPage(item: treeItem.Item) {
+    const contestId = item.contestId!;
+    const { result: contest, error } = tree.getContest(contestId);
+    if (error) {
+        console.error(error);
+        return;
+    }
+    let url = '';
+    switch (contest!.meta.platform) {
+        case meta.Platform.Codeforces:
+            url = `https://codeforces.com/contest/${contestId}/submit`;
+            break;
+        default:
+    }
+    return openURL(url);
+}
+
+function refill(platform: meta.Platform, commits: meta.Commit[], fetched: Map<meta.Platform, Map<string, Map<string, meta.Commit[]>>>) {
+    const newMap = new Map<string, Map<string, meta.Commit[]>>();
+    fetched.set(platform, newMap);
+
+    for (const commit of commits!) {
+        const { contestId, questionId } = commit;
+        if (!contestId || !questionId) {
+            continue;
+        }
+        const A = fetched.get(platform)!;
+        if (!A.get(contestId)) {
+            const newMap = new Map<string, meta.Commit[]>();
+            A.set(contestId, newMap);
+        }
+        const B = A.get(contestId)!;
+        if (!B.get(questionId)) {
+            const newCommit: meta.Commit[] = [];
+            B.set(questionId, newCommit);
+        }
+        const C = B.get(questionId)!;
+        C.push(commit);
+    }
+}
+
+export async function updateQuestionsStatistics() {
+    // platform -- contestId -- questionId
+    const fetched = new Map<meta.Platform, Map<string, Map<string, meta.Commit[]>>>();
+    const allContests = tree.getTree().contests;
+    if (allContests.size === 0) {
+        return;
+    }
+    for (const c of allContests) {
+        const contest = c[1];
+        const platform = contest.meta.platform;
+        const method = contests.availablegetSubmissions.get(platform);
+        if (!method) {
+            continue;
+        }
+        let submissions: Map<string, meta.Commit[]> | undefined;
+
+        switch (platform) {
+            case meta.Platform.Codeforces:
+                {
+                    const username = configs.elycodeConfig!.platformConfig!.codeforcesUserName;
+                    if (!username) {
+                        vscode.window.showErrorMessage("Please set Codeforces user name at vscode config.");
+                        continue;
+                    }
+                    const result = fetched.get(meta.Platform.Codeforces);
+                    if (!result) {
+                        const { result: commits, error } = await method(username);
+                        if (error) {
+                            console.error(error);
+                            continue;
+                        }
+                        refill(meta.Platform.Codeforces, commits!, fetched);
+                    }
+                    submissions = fetched.get(meta.Platform.Codeforces)!.get(contest.meta.id);
+                }
+                break;
+            default:
+        }
+
+        if (!submissions) {
+            continue;
+        }
+        for (const question of contest.questions) {
+            const id = question.id;
+            const submission = submissions.get(id);
+            if (submission) {
+                submission.map((s) => contests.update(question.statistics, s));
+            }
+        }
+    }
+}
+
+export async function refresh() {
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Refreshing contest statistics...'
+    }, async () => {
+        await updateQuestionsStatistics();
+        tree.getTree().sync();
+    });
+
+    vscode.window.showInformationMessage('Contest statistics updated.');
 }

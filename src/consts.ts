@@ -5,25 +5,30 @@ export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 export const elycodeDir = path.join(root, '.elycode');
 
 export enum configs {
-    compilerDetectMode = 'compilerMode',
-    compilerCustomPath = 'compilerCustomPath',
-    compileExtraParams = 'compileExtraParams',
-    temporaryPath = 'temporaryPath',
-    runningTimeLimit = 'runningTimeLimit',
-    runningMemoryLimit = 'runningMemoryLimit',
-    templateMode = 'templateMode',
-    customTemplate = 'customTemplate',
+    compilerDetectMode = 'compiler.detectMode',
+    compilerCustomPath = 'compiler.customPath',
+    compileExtraParams = 'compiler.extraParams',
+    runningTimeLimit = 'running.timeLimit(seconds)',
+    runningMemoryLimit = 'running.memoryLimit(MB)',
+    temporaryPath = 'running.temporaryPath',
+    templateMode = 'code.templateMode',
+    customTemplate = 'code.customTemplate',
+    codeforcesUserName = 'platform.codeforces.UserName',
+    updateContestInfoIntervalSecond = 'platform.updateContestInfoInterval(seconds)'
 }
 
 export enum commands {
     elycodeHello = 'elycode.hello',
     openWorkspace = 'elycode.openWorkspace',
+    refresh = 'elycode.refresh',
     addContest = 'elycode.addContest',
     deleteContest = 'elycode.deleteContest',
     sidebarView = 'elycode.sidebarView',
     notebook = 'elycode.notebook',
     codingWindow = 'elycode.codingWindow',
     updateContestName = 'elycode.updateContestName',
+    openURL = 'elycode.openURL',
+    openSubmitPage = 'elycode.openSubmitPage',
 }
 
 export const AUTO_CODE_TEMPLATE = `#include<bits/stdc++.h>
@@ -62,6 +67,7 @@ export const CODEFORCES_HOSTS = new Set<string>([
 ]);
 export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
 export const CODEFORCES_STANDINGS = 'contest.standings';
+export const CODEFORCES_USERSTATUS = 'user.status';
 
 export const GCC_DIRECTORIES_BY_PLATFORM: Record<NodeJS.Platform, string[]> = {
     aix: [],
@@ -96,4 +102,4 @@ export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {
     sunos: ['gcc', 'cc']
 };
 
-export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++'];
+export const GCC_EXTRA_PARAMS = ['-pipe', '-static', '-s', '-lstdc++', '-lm'];

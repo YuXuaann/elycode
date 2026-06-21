@@ -16,8 +16,21 @@ enum TemplateMode {
 }
 
 export class ElycodeConfig {
+    platformConfig?: PlatformConfig;
     compilerConfig?: CompilerConfig;
     runnerConfig?: RunnerConfig;
+}
+
+export class PlatformConfig {
+    codeforcesUserName?: string;
+    constructor(
+        codeforcesUserName: string,
+        public readonly updateContestInfoIntervalSecond: number,
+    ) {
+        if (codeforcesUserName !== '') {
+            this.codeforcesUserName = codeforcesUserName;
+        }
+    }
 }
 
 export class CompilerConfig {

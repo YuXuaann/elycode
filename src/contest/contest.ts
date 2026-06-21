@@ -37,6 +37,13 @@ export interface Contest {
      */
     create(pathname: string): Promise<Result<Contest>>;
 
+
+    /**
+     * Fetch the **latest** submissions (at least 1) record for the specified username.
+     * (static actually)
+     */
+    getSubmissions(username: string): Promise<Result<meta.Commit[]>>;
+
     /**
      * Metadata describing the contest (identifier, name, schedule, etc.).
      */
@@ -50,7 +57,7 @@ export interface Contest {
 
 export const availableFactories = new Map<ReadonlySet<string>, (path: string) => Promise<Result<Contest>>>();
 export const availableContests = new Map<meta.Platform, (data: unknown) => Result<Contest>>();
-
+export const availablegetSubmissions = new Map<meta.Platform, (username: string) => Promise<Result<meta.Commit[]>>>();
 
 /**
  * Registers a contest implementation so Elycode can look it up by host and revive persisted data.
@@ -63,11 +70,14 @@ export function register(hosts: ReadonlySet<string>, contest: Contest, transfer:
     console.log(`Registering ${contest.meta.platform} for hosts: ${[...hosts].join(', ')}`);
     availableFactories.set(hosts, contest.create);
     availableContests.set(contest.meta.platform, transfer);
+    availablegetSubmissions.set(contest.meta.platform, contest.getSubmissions);
 }
 
 export const loadFromLocal = func.loadFromLocal;
 export const loadFromURL = func.loadFromURL;
 export const saveToLocal = func.saveToLocal;
+export const passed = meta.passed;
+export const update = meta.update;
 export type Question = meta.Question;
 
 // Register built-in contest implementations.
