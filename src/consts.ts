@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 export const root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? '';
 export const elycodeDir = path.join(root, '.elycode');
+export const extensionDir = vscode.extensions.getExtension('yuxuaan.elycode')?.extensionUri.fsPath ?? '';
 
 export enum configs {
     compilerDetectMode = 'compiler.detectMode',
@@ -86,6 +87,34 @@ export const GCC_DIRECTORIES_BY_PLATFORM: Record<NodeJS.Platform, string[]> = {
         'C:/Program Files/mingw-w64/bin',
         'C:/Program Files (x86)/mingw-w64/bin'
     ]
+};
+
+export const AUTO_GCC_DIRECTORIE_BY_PLATFORM: Record<NodeJS.Platform, string> = {
+    aix: '',
+    android: '',
+    cygwin: '',
+    darwin: '',
+    freebsd: '',
+    haiku: '',
+    linux: '',
+    netbsd: '',
+    openbsd: '',
+    sunos: '',
+    win32: 'elycode-gcc-win64-16.1.0'
+};
+
+export const AUTO_GCC_DOWNLOAD_URL_BY_PLATFORM: Record<NodeJS.Platform, string> = {
+    aix: '',
+    android: '',
+    cygwin: '',
+    darwin: '',
+    freebsd: '',
+    haiku: '',
+    linux: '',
+    netbsd: '',
+    openbsd: '',
+    sunos: '',
+    win32: 'https://zenlayer.dl.sourceforge.net/project/gcc-win64/16.1.0/gcc-16.1.0-gdb-17.2.90.20260510-binutils-2.46.0-mingw-w64-v14.0.0-ucrt.7z?viasf=1&fid=1c961fed6b66bd6f'
 };
 
 export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {

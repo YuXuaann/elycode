@@ -1,39 +1,11 @@
 import * as config from "../configs";
 import * as fs from 'fs';
-import * as cp from 'child_process';
-import * as path from 'path';
-import * as util from 'util';
 import * as utils from '../utils';
 import * as func from './func';
+import * as compiler from './compiler';
 import { Result, Ok, Err } from "../utils";
 
-const execFileAsync = util.promisify(cp.execFile);
-
-class Compiler {
-    constructor(
-        private readonly config: config.CompilerConfig,
-    ) { }
-
-    async compileToTemp(codePath: string): Promise<Result<string>> {
-        const cfg = this.config;
-        const tempDir = fs.mkdtempSync(path.join(cfg.tempDir, 'elycode-run-'));
-        const executablePath = path.join(tempDir, "elycode.out");
-        try {
-            const compileResult = await execFileAsync(cfg.compilerPath, [codePath, ...cfg.extraParams, '-o', executablePath]);
-            if (compileResult.stderr) {
-                return Err(new Error(compileResult.stderr));
-            }
-            return Ok(executablePath);
-        } catch (error) {
-            const err = error as cp.ExecFileException & { stderr?: string };
-            const stderr = err?.stderr?.trim();
-            const message = stderr && stderr.length > 0 ? stderr : err.message;
-            return Err(new Error(message));
-        }
-    }
-}
-
-export class CodeRunner extends Compiler {
+export class CodeRunner extends compiler.Compiler {
     constructor(
         compilerConfig: config.CompilerConfig,
         private readonly runnerConfig: config.RunnerConfig,

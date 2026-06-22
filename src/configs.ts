@@ -1,9 +1,11 @@
 import * as fs from 'fs';
 import * as consts from './consts';
-import * as utils from './utils';
-import { Result, Ok, Err } from "./utils";
+import { Result, Ok } from "./utils";
 
-export type LanguageType = 'c/cpp' | undefined;
+export enum LanguageType {
+    C = 'c/cpp',
+    unknown = 'unknown'
+}
 
 enum CompilerDetectMode {
     autoGCC = 'auto detect(gcc)',
@@ -63,25 +65,19 @@ export class CompilerConfig {
         this.extraParams = mergedParams;
     }
 
-    static new(
+    static async new(
         compilerDetectMode: string,
         compilerCustomPath: string,
         tempDir: string,
         extraParams: string,
-    ): Result<CompilerConfig> {
-        fs.mkdirSync(tempDir, { recursive: true });
+    ): Promise<Result<CompilerConfig>> {
+        await fs.promises.mkdir(tempDir, { recursive: true });
         switch (compilerDetectMode) {
             case CompilerDetectMode.customGCC:
-                return Ok(new CompilerConfig('c/cpp', compilerCustomPath, tempDir, extraParams));
+                return Ok(new CompilerConfig(LanguageType.C, compilerCustomPath, tempDir, extraParams));
             case CompilerDetectMode.autoGCC:
             default:
-                {
-                    const { result, error } = utils.detectGccExecutable();
-                    if (error) {
-                        return Err(error);
-                    }
-                    return Ok(new CompilerConfig('c/cpp', result!, tempDir, extraParams));
-                }
+                return Ok(new CompilerConfig(LanguageType.C, CompilerDetectMode.autoGCC, tempDir, extraParams));
         }
     }
 }

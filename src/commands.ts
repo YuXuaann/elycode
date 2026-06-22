@@ -253,6 +253,4 @@ export async function refresh() {
         await updateQuestionsStatistics();
         tree.getTree().sync();
     });
-
-    vscode.window.showInformationMessage('Contest statistics updated.');
 }

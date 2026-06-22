@@ -8,7 +8,7 @@ import * as configs from './configs';
 import * as utils from './utils';
 import * as treeItem from './viewer/treeItem';
 
-function config() {
+async function config() {
 	const config = vscode.workspace.getConfiguration('elycode');
 	const compilerDetectMode = config.get<string>(consts.configs.compilerDetectMode, '');
 	const compilerCustomPath = config.get<string>(consts.configs.compilerCustomPath, '');
@@ -21,13 +21,14 @@ function config() {
 	const codeforcesUserName = config.get<string>(consts.configs.codeforcesUserName, '');
 	const updateContestInfoIntervalSecond = config.get<number>(consts.configs.updateContestInfoIntervalSecond, 60);
 
-	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
+	const { result, error } = await configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
 	if (error) {
 		utils.vsPrint(error.message);
-		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}.`);
+		vscode.window.showErrorMessage(`Failed to load compiler config: ${error.message ?? error}.`);
+	} else {
+		configs.elycodeConfig.compilerConfig = result!;
 	}
 	configs.elycodeConfig.platformConfig = new configs.PlatformConfig(codeforcesUserName, updateContestInfoIntervalSecond);
-	configs.elycodeConfig.compilerConfig = result!;
 	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
 }
 
@@ -59,7 +60,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 export async function activate(context: vscode.ExtensionContext) {
 	utils.vsPrint('elycode is now active!');
 
-	config();
+	await config();
 	registerCommands();
 
 	const components = [];
