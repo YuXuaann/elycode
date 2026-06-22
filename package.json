@@ -8,6 +8,10 @@
 	"author": "yuxuaan",
 	"type": "commonjs",
 	"main": "./out/elycode.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/YuXuaann/elycode"
+	},
 	"engines": {
 		"vscode": "^1.100.0"
 	},

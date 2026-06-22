@@ -1,0 +1,7 @@
+**/*
+!package.json
+!README.md
+!LICENSE
+!media/**
+!out/**
+!node_modules/**
