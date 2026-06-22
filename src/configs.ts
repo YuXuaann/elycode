@@ -7,7 +7,7 @@ export enum LanguageType {
     unknown = 'unknown'
 }
 
-enum CompilerDetectMode {
+export enum CompilerDetectMode {
     autoGCC = 'auto detect(gcc)',
     customGCC = 'custom(gcc)',
 }

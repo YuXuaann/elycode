@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as cp from 'child_process';
 import * as https from 'https';
+import { path7za } from '7zip-bin';
 import * as configs from './configs';
 import * as vscode from 'vscode';
 
@@ -79,18 +80,18 @@ export async function extractArchive(
     destinationDir: string,
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     token: vscode.CancellationToken
-): Promise<string[]> {
+): Promise<Result<void>> {
     await fs.promises.mkdir(destinationDir, { recursive: true });
 
-    return new Promise((resolve, reject) => {
-        const entries: string[] = [];
-        const sevenZip = cp.spawn('7z', ['x', archivePath, `-o${destinationDir}`, '-y']);
+    return new Promise((resolve) => {
+        let cancelled = false;
+        const sevenZip = cp.spawn(path7za, ['x', archivePath, `-o${destinationDir}`, '-y']);
 
         const onData = (data: Buffer) => {
             const output = data.toString();
             const match = output.match(/Extracting\s+(.*)/);
             if (match && match[1]) {
-                entries.push(match[1].trim());
+                progress.report({ message: `Extracting: ${match[1].trim()}` });
             }
         };
 
@@ -98,21 +99,27 @@ export async function extractArchive(
         sevenZip.stderr.on('data', onData);
 
         token.onCancellationRequested(() => {
+            cancelled = true;
             sevenZip.kill('SIGTERM');
         });
 
         sevenZip.on('error', error => {
-            reject(error);
+            resolve(Err(new Error(`7z extraction error: ${error.message}`)));
         });
 
         sevenZip.on('close', code => {
-            if (code !== 0) {
-                reject(new Error('7z extraction failed'));
+            if (cancelled) {
+                resolve(Err(new Error('Extraction cancelled')));
                 return;
             }
 
-            progress.report({ message: 'extraction succeed', increment: 50 });
-            resolve(entries);
+            if (code !== 0) {
+                resolve(Err(new Error(`7z extraction failed with exit code ${code}`)));
+                return;
+            }
+
+            progress.report({ message: 'Extraction completed', increment: 50 });
+            resolve(Ok(undefined));
         });
     });
 }

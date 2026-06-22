@@ -14,6 +14,7 @@ const execFileAsync = util.promisify(cp.execFile);
 export class Compiler {
     public readonly platform: NodeJS.Platform;
     public adoptDirectories: string[];
+    public compilerPath?: string;
 
     constructor(
         private readonly config: configs.CompilerConfig,
@@ -24,8 +25,16 @@ export class Compiler {
             default:
             case configs.LanguageType.C: {
                 this.adoptDirectories = consts.GCC_DIRECTORIES_BY_PLATFORM[platform];
-                this.adoptDirectories.push(this.autoGCCDir());
+                this.adoptDirectories.push(path.join(this.autoGCCDir(), 'bin'));
             }
+        }
+
+        switch (config.compilerPath) {
+            case configs.CompilerDetectMode.customGCC: {
+                this.compilerPath = config.compilerPath;
+                break;
+            }
+            default:
         }
     }
 
@@ -81,7 +90,6 @@ export class Compiler {
         await fs.promises.mkdir(extractionDir, { recursive: true });
         const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'elycode-gcc-'));
         const archivePath = path.join(tempDir, 'gcc.7z');
-        utils.vsPrint(`archivePath: ${archivePath}`);
 
         const cleanup = async () => {
             await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
@@ -107,14 +115,12 @@ export class Compiler {
 
                     progress.report({ message: 'Extracting archive...', increment: 50 });
 
-                    const entries = await utils.extractArchive(archivePath, extractionDir, progress, token);
-                    const gccEntry = entries.find(entry => /gcc\.exe$/i.test(entry));
-                    if (!gccEntry) {
-                        throw new Error('Unable to locate gcc.exe after extraction.');
+                    const { error } = await utils.extractArchive(archivePath, extractionDir, progress, token);
+                    if (error) {
+                        throw error;
                     }
 
-                    const absolutePath = path.normalize(path.join(extractionDir, gccEntry));
-                    return absolutePath;
+                    return path.join(this.autoGCCDir(), 'bin/gcc.exe');
                 }
             );
 
@@ -134,17 +140,23 @@ export class Compiler {
     }
 
     async getCompilerPath(): Promise<Result<string>> {
+        if (this.compilerPath) {
+            return Ok(this.compilerPath);
+        }
+
         switch (this.config.languageType) {
             default:
             case configs.LanguageType.C: {
                 const { result, error } = this.detectGCCExecutable();
                 if (error) {
-                    const { result, error: downloadErr } = await this.autoDownloadGCC();
-                    if (downloadErr) {
-                        return Err(downloadErr);
+                    const { result, error } = await this.autoDownloadGCC();
+                    if (error) {
+                        return Err(error);
                     }
+                    this.compilerPath = result!;
                     return Ok(result!);
                 }
+                this.compilerPath = result!;
                 return Ok(result!);
             }
         }
