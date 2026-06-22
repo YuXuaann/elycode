@@ -23,6 +23,7 @@ function config() {
 
 	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
 	if (error) {
+		utils.vsPrint(error.message);
 		vscode.window.showErrorMessage(`Failed to load compiler config: ${error}.`);
 	}
 	configs.elycodeConfig.platformConfig = new configs.PlatformConfig(codeforcesUserName, updateContestInfoIntervalSecond);
@@ -56,7 +57,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 
 
 export async function activate(context: vscode.ExtensionContext) {
-	console.log('elycode is now active!');
+	utils.vsPrint('elycode is now active!');
 
 	config();
 	registerCommands();

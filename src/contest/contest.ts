@@ -1,5 +1,6 @@
 import * as meta from './meta';
 import * as func from './func';
+import * as utils from "../utils";
 import { Result } from "../utils";
 
 /**
@@ -67,7 +68,7 @@ export const availablegetSubmissions = new Map<meta.Platform, (username: string)
  * @param transfer A function that converts serialized payloads back into `Contest` instances.
  */
 export function register(hosts: ReadonlySet<string>, contest: Contest, transfer: (data: unknown) => Result<Contest>): void {
-    console.log(`Registering ${contest.meta.platform} for hosts: ${[...hosts].join(', ')}`);
+    utils.vsPrint(`Registering ${contest.meta.platform} for hosts: ${[...hosts].join(', ')}`);
     availableFactories.set(hosts, contest.create);
     availableContests.set(contest.meta.platform, transfer);
     availablegetSubmissions.set(contest.meta.platform, contest.getSubmissions);

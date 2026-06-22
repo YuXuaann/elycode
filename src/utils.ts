@@ -17,6 +17,12 @@ export function MemoryLimitExceeded<T>(error: Error): Result<T> { return Err(new
 export function CompileError<T>(error: Error): Result<T> { return Err(new Error(`CompileError: ${error.message}`)); }
 export function RunError<T>(error: Error): Result<T> { return Err(new Error(`RunError: ${error.message}`)); }
 
+const output = vscode.window.createOutputChannel('elycode');
+export function vsPrint(message: string) {
+    output.appendLine(message);
+    output.show(true);
+}
+
 export function detectGccExecutable(): Result<string> {
     const platform = os.platform();
     const directories = consts.GCC_DIRECTORIES_BY_PLATFORM[platform] ?? [];

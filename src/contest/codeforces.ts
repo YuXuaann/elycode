@@ -131,7 +131,6 @@ export class Codeforces implements contest.Contest {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getProblems(contestId: string, id: string): Promise<Result<any>> {
-    console.log(`[getProblems] contestId: ${contestId}, id: ${id}`);
     const response = await fetch(`${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`);
     if (!response.ok) {
         return Err(new Error(`Codeforces fetch problems Error with status: ${response.status}`));
