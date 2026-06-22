@@ -48,7 +48,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 	utils.startBackgroundTask(
 		context,
 		configs.elycodeConfig!.platformConfig!.updateContestInfoIntervalSecond * 1000,
-		async () => { await cmd.updateQuestionsStatistics(); },
+		async () => { return await cmd.updateQuestionsStatistics(); },
 		{
 			onSuccess: () => tree.getTree().sync(),
 			onError: (error) => console.error('Failed to auto refresh contest information:', error),

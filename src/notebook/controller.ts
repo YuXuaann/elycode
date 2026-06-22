@@ -16,6 +16,7 @@ export class Controller implements vscode.Disposable {
         this._controller.supportedLanguages = languages;
         this._controller.supportsExecutionOrder = true;
         this._controller.executeHandler = this._execute.bind(this);
+        this._controller.interruptHandler = this._interruptHandler.bind(this);
         this.codeRunner = new runner.CodeRunner(config.elycodeConfig.compilerConfig!, config.elycodeConfig.runnerConfig!);
     }
 
@@ -26,6 +27,10 @@ export class Controller implements vscode.Disposable {
 
     dispose(): void {
         this._controller.dispose();
+    }
+
+    private async _interruptHandler(_: vscode.NotebookDocument): Promise<void> {
+        // todo
     }
 
     private async _execute(

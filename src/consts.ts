@@ -114,8 +114,23 @@ export const AUTO_GCC_DOWNLOAD_URL_BY_PLATFORM: Record<NodeJS.Platform, string> 
     netbsd: '',
     openbsd: '',
     sunos: '',
-    win32: 'https://zenlayer.dl.sourceforge.net/project/gcc-win64/16.1.0/gcc-16.1.0-gdb-17.2.90.20260510-binutils-2.46.0-mingw-w64-v14.0.0-ucrt.7z?viasf=1&fid=1c961fed6b66bd6f'
+    win32: 'https://sourceforge.net/projects/gcc-win64/files/latest/download'
 };
+
+export const AUTO_GCC_VSCODE_CONFIG = `// created by elycode
+// 
+// this file exist when you set compiler detect mode is \`auto detect(gcc)\`
+{
+    "configurations": [
+        {
+            "name": "elycode",
+            "compilerPath": "AUTO_GCC_DIRECTORIE"
+        }
+    ],
+    "version": 4
+}
+`;
+
 
 export const GCC_EXECUTABLE_NAMES: Record<NodeJS.Platform, string[]> = {
     win32: ['gcc.exe', 'x86_64-w64-mingw32-gcc.exe'],

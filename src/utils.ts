@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as cp from 'child_process';
-import * as https from 'https';
+import * as path from 'path';
 import { path7za } from '7zip-bin';
 import * as configs from './configs';
 import * as vscode from 'vscode';
@@ -28,50 +28,98 @@ export async function downloadFile(
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     token: vscode.CancellationToken
 ): Promise<void> {
+    await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+
     return new Promise((resolve, reject) => {
-        const request = https.get(url, response => {
-            if (response.statusCode && response.statusCode >= 400) {
-                reject(new Error(`HTTP ${response.statusCode} while downloading GCC`));
+        const curlArgs = ['-L', '--fail', '--retry', '3', '--output', destination, url];
+        const commandCandidates = process.platform === 'win32'
+            ? ['curl', 'curl.exe']
+            : ['curl'];
+        let child: cp.ChildProcess | undefined;
+        let lastPercent = 0;
+        const totalDownloadQuota = 40;
+        const completionBonus = 10;
+
+        const cleanupOnError = async (error: Error) => {
+            try {
+                await fs.promises.rm(destination, { force: true });
+            } catch {
+                // ignore cleanup errors
+            }
+            reject(error);
+        };
+
+        const startCommand = (index: number) => {
+            if (index >= commandCandidates.length) {
+                cleanupOnError(new Error('wget binary not found on PATH. Please install wget and try again.'));
                 return;
             }
 
-            const total = Number(response.headers['content-length'] ?? 0);
-            let received = 0;
-
-            const writeStream = fs.createWriteStream(destination);
-
-            const updateProgress = () => {
-                if (total > 0) {
-                    const increment = (received / total) * 40;
-                    progress.report({ message: `Downloading... ${(received / total * 100).toFixed(1)}%`, increment });
+            const candidate = commandCandidates[index];
+            try {
+                child = cp.spawn(candidate, curlArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+            } catch (error) {
+                const err = error as NodeJS.ErrnoException;
+                if (err.code === 'ENOENT') {
+                    startCommand(index + 1);
+                    return;
                 }
+                cleanupOnError(new Error(`Failed to start curl: ${err.message}`));
+                return;
+            }
+
+            const handleProgressOutput = (data: Buffer) => {
+                const text = data.toString();
+                const matches = [...text.matchAll(/(\d{1,3})\.\d*%/g)];
+                if (matches.length === 0) {
+                    return;
+                }
+
+                const lastMatch = matches[matches.length - 1][0];
+                const percent = Number(lastMatch.replace('%', ''));
+                if (Number.isNaN(percent) || percent <= lastPercent) {
+                    return;
+                }
+
+                const increment = ((percent - lastPercent) / 100) * totalDownloadQuota;
+                lastPercent = percent;
+                progress.report({ message: `Downloading... ${percent.toFixed(1)}%`, increment });
             };
 
-            response.on('data', chunk => {
-                received += chunk.length;
-                updateProgress();
-            });
+            child.stderr?.on('data', handleProgressOutput);
 
             token.onCancellationRequested(() => {
-                writeStream.destroy(new Error('Download cancelled'));
-                request.destroy(new Error('Download cancelled'));
+                if (child && !child.killed) {
+                    child.kill('SIGTERM');
+                }
             });
 
-            response.pipe(writeStream);
-
-            writeStream.on('finish', () => {
-                progress.report({ message: 'Download succeed', increment: 10 });
-                resolve();
+            child.on('error', error => {
+                const err = error as NodeJS.ErrnoException;
+                if (err.code === 'ENOENT') {
+                    startCommand(index + 1);
+                    return;
+                }
+                cleanupOnError(new Error(`curl error: ${err.message}`));
             });
 
-            writeStream.on('error', error => {
-                reject(error);
-            });
-        });
+            child.on('close', async code => {
+                if (code === 0) {
+                    const filled = (lastPercent / 100) * totalDownloadQuota;
+                    progress.report({
+                        message: 'Download completed',
+                        increment: Math.max(0, totalDownloadQuota - filled) + completionBonus
+                    });
+                    resolve();
+                    return;
+                }
 
-        request.on('error', error => {
-            reject(error);
-        });
+                const err = new Error(`curl exited with code ${code ?? 'unknown'}`);
+                await cleanupOnError(err);
+            });
+        };
+
+        startCommand(0);
     });
 }
 
@@ -189,7 +237,7 @@ interface BackgroundTaskOptions {
 export function startBackgroundTask(
     context: vscode.ExtensionContext,
     intervalMs: number,
-    task: () => Promise<void>,
+    task: () => Promise<Result<void>>,
     options: BackgroundTaskOptions = {}
 ): NodeJS.Timeout {
     let running = false;
@@ -201,14 +249,15 @@ export function startBackgroundTask(
         }
 
         running = true;
-        try {
-            await task();
-            options.onSuccess?.();
-        } catch (error) {
+
+        const { error } = await task();
+        if (error) {
             handleError(error);
-        } finally {
-            running = false;
+        } else {
+            options.onSuccess?.();
         }
+
+        running = false;
     };
 
     if (options.runImmediately) {

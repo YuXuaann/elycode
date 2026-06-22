@@ -7,6 +7,7 @@ import * as tree from './viewer/viewer';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as treeItem from './viewer/treeItem';
+import { Result, Ok, Err } from "./utils";
 
 export async function openWorkspace() {
     const selected = await vscode.window.showOpenDialog({
@@ -193,12 +194,12 @@ function refill(platform: meta.Platform, commits: meta.Commit[], fetched: Map<me
     }
 }
 
-export async function updateQuestionsStatistics() {
+export async function updateQuestionsStatistics(): Promise<Result<void>> {
     // platform -- contestId -- questionId
     const fetched = new Map<meta.Platform, Map<string, Map<string, meta.Commit[]>>>();
     const allContests = tree.getTree().contests;
     if (allContests.size === 0) {
-        return;
+        return Err(new Error('Contest is not loaded or existed.'));
     }
     for (const c of allContests) {
         const contest = c[1];
@@ -243,6 +244,7 @@ export async function updateQuestionsStatistics() {
             }
         }
     }
+    return Ok(undefined);
 }
 
 export async function refresh() {

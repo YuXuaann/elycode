@@ -144,6 +144,7 @@ export class Compiler {
             return Ok(this.compilerPath);
         }
 
+        let compilerPath: string;
         switch (this.config.languageType) {
             default:
             case configs.LanguageType.C: {
@@ -153,13 +154,43 @@ export class Compiler {
                     if (error) {
                         return Err(error);
                     }
-                    this.compilerPath = result!;
-                    return Ok(result!);
+                    compilerPath = result!;
+                } else {
+                    compilerPath = result!;
                 }
-                this.compilerPath = result!;
-                return Ok(result!);
             }
         }
+
+        this.compilerPath = compilerPath;
+
+        const vscodeDir = path.join(consts.root, '.vscode');
+        const cppConfigPath = path.join(vscodeDir, 'c_cpp_properties.json');
+
+        if (fs.existsSync(cppConfigPath)) {
+            return Ok(compilerPath);
+        }
+
+        const consent = await vscode.window.showInformationMessage(
+            'Would you like Elycode to generate a VS Code C/C++ config for this compiler?',
+            'OK',
+            'Cancel'
+        );
+
+        if (consent !== 'OK') {
+            return Ok(compilerPath);
+        }
+
+        try {
+            await fs.promises.mkdir(vscodeDir, { recursive: true });
+            const configContent = consts.AUTO_GCC_VSCODE_CONFIG.replace('AUTO_GCC_DIRECTORIE', compilerPath.replace(/\\/g, '/'));
+            await fs.promises.writeFile(cppConfigPath, configContent, 'utf8');
+            vscode.window.showInformationMessage('Generated VS Code C/C++ configuration for Elycode.');
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            vscode.window.showErrorMessage(`Failed to write C/C++ configuration: ${err.message}`);
+        }
+
+        return Ok(compilerPath);
     }
 
     async compileToTemp(codePath: string): Promise<Result<string>> {
