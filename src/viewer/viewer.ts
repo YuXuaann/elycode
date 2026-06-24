@@ -195,10 +195,10 @@ function questionDescription(timeConsumedMillis?: number, memoryConsumedBytes?: 
         result += `time: ${timeConsumedMillis}ms`;
     }
     if (memoryConsumedBytes) {
-        result += `memory: ${memoryConsumedBytes}B`;
+        result += ` memory: ${memoryConsumedBytes}B`;
     }
     if (timestamp) {
-        result += `at ${timestamp}`;
+        result += ` at ${timestamp}`;
     }
     return result;
 }
