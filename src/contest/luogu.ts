@@ -91,7 +91,6 @@ export class Luogu implements contest.Contest {
 
                     const params = new URLSearchParams({ pid: pid, user: username, page: '1' });
                     commit.code = `https://www.luogu.com.cn/record/list?${params.toString()}`;
-                    console.log(commit.code);
                 }
                 commits.push(commit);
             }
