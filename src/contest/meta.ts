@@ -1,15 +1,22 @@
 import * as contest from "./contest";
 
-// todo: export type ContestPlatform = 'Codeforces' | 'AtCoder' | 'LeetCode' | 'HackerRank' | 'CodeChef' | undefined;
 export enum Platform {
     Codeforces = 'Codeforces',
+    Luogu = 'Luogu',
     Unknown = ''
 }
-type QuestionType = 'normal' | 'interactive';
+
+export enum QuestionType {
+    normal = 'normal',
+    interactive = 'interactive', // todo: support interactive
+}
 
 export class Meta {
     createdTime = '';
     platform: Platform = Platform.Unknown;
+    // codeforces's id is pure number
+    // luogu's id is `P` + pure number
+    // todo: add platform attribute to id
     id = '';         // unique identifier for the contest, e.g., "cf-2231" = "Codeforces Round 1099 (Div. 2)"
     name = '';       // human-readable name of the contest
     startTime = '';
@@ -26,12 +33,12 @@ export class Sample {
 export class Commit {
     contestId = '';
     questionId = '';
-    timestamp = '';
+    timestamp?: string;
     code = '';
     verdict = '';
-    passedTestCount = 0;
-    timeConsumedMillis = 0;
-    memoryConsumedBytes = 0;
+    passedTestCount?: number;
+    timeConsumedMillis?: number;
+    memoryConsumedBytes?: number;
 }
 
 export function passed(commit: Commit): boolean {

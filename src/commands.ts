@@ -160,14 +160,11 @@ export async function openSubmitPage(item: treeItem.Item) {
         console.error(error);
         return;
     }
-    let url = '';
-    switch (contest!.meta.platform) {
-        case meta.Platform.Codeforces:
-            url = `https://codeforces.com/contest/${contestId}/submit`;
-            break;
-        default:
+
+    const method = contests.availablegetSubmitURL.get(contest!.meta.platform);
+    if (method) {
+        return openURL(method(contestId));
     }
-    return openURL(url);
 }
 
 function refill(platform: meta.Platform, commits: meta.Commit[], fetched: Map<meta.Platform, Map<string, Map<string, meta.Commit[]>>>) {
@@ -208,30 +205,24 @@ export async function updateQuestionsStatistics(): Promise<Result<void>> {
         if (!method) {
             continue;
         }
-        let submissions: Map<string, meta.Commit[]> | undefined;
 
-        switch (platform) {
-            case meta.Platform.Codeforces:
-                {
-                    const username = configs.elycodeConfig!.platformConfig!.codeforcesUserName;
-                    if (!username) {
-                        vscode.window.showErrorMessage("Please set Codeforces user name at vscode config.");
-                        continue;
-                    }
-                    const result = fetched.get(meta.Platform.Codeforces);
-                    if (!result) {
-                        const { result: commits, error } = await method(username);
-                        if (error) {
-                            console.error(error);
-                            continue;
-                        }
-                        refill(meta.Platform.Codeforces, commits!, fetched);
-                    }
-                    submissions = fetched.get(meta.Platform.Codeforces)!.get(contest.meta.id);
-                }
-                break;
-            default:
+        const platformConfig = configs.elycodeConfig!.platformConfig!.get(platform);
+        if (!platformConfig || !platformConfig.userName) {
+            vscode.window.showErrorMessage(`Please set ${platform} user name at vscode config.`);
+            continue;
         }
+        const username = platformConfig.userName!;
+
+        const result = fetched.get(platform);
+        if (!result) {
+            const { result: commits, error } = await method(username);
+            if (error) {
+                console.error(error);
+                continue;
+            }
+            refill(platform, commits!, fetched);
+        }
+        const submissions = fetched.get(platform)!.get(contest.meta.id);
 
         if (!submissions) {
             continue;

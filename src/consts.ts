@@ -14,6 +14,7 @@ export enum configs {
     templateMode = 'code.templateMode',
     customTemplate = 'code.customTemplate',
     codeforcesUserName = 'platform.codeforces.UserName',
+    luoguUserName = 'platform.luogu.UserName',
     updateContestInfoIntervalSecond = 'platform.updateContestInfoInterval(seconds)'
 }
 
@@ -68,6 +69,13 @@ export const CODEFORCES_HOSTS = new Set<string>([
 export const CODEFORCES_API_BASE = 'https://codeforces.com/api';
 export const CODEFORCES_STANDINGS = 'contest.standings';
 export const CODEFORCES_USERSTATUS = 'user.status';
+
+export const LUOGU_HOSTS = new Set<string>([
+    'www.luogu.com.cn',
+]);
+export const LUOGU_API_BASE = 'https://www.luogu.com.cn/';
+export const LUOGU_GETUSER = 'api/user/search';
+export const LUOGU_USERSTATUS = 'user/:uid/practice';
 
 export const GCC_DIRECTORIES_BY_PLATFORM: Record<NodeJS.Platform, string[]> = {
     aix: [],

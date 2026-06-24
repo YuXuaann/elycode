@@ -6,6 +6,7 @@ import * as serializer from './notebook/serializer';
 import * as controller from './notebook/controller';
 import * as configs from './configs';
 import * as utils from './utils';
+import * as meta from './contest/meta';
 import * as treeItem from './viewer/treeItem';
 
 function config() {
@@ -18,7 +19,15 @@ function config() {
 	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
 	const customTemplate = config.get<string>(consts.configs.customTemplate, '');
 	const codeforcesUserName = config.get<string>(consts.configs.codeforcesUserName, '');
+	const luoguUserName = config.get<string>(consts.configs.luoguUserName, '');
 	const updateContestInfoIntervalSecond = config.get<number>(consts.configs.updateContestInfoIntervalSecond, 60);
+
+	configs.elycodeConfig.updateContestInfoIntervalSecond = updateContestInfoIntervalSecond;
+
+	const codeforcesConfig = new configs.PlatformConfig(codeforcesUserName);
+	const luoguConfig = new configs.PlatformConfig(luoguUserName);
+	configs.elycodeConfig.platformConfig.set(meta.Platform.Codeforces, codeforcesConfig);
+	configs.elycodeConfig.platformConfig.set(meta.Platform.Luogu, luoguConfig);
 
 	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, compileExtraParams);
 	if (error) {
@@ -27,7 +36,6 @@ function config() {
 	} else {
 		configs.elycodeConfig.compilerConfig = result!;
 	}
-	configs.elycodeConfig.platformConfig = new configs.PlatformConfig(codeforcesUserName, updateContestInfoIntervalSecond);
 	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
 }
 
@@ -46,7 +54,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 	// refresh task
 	utils.startBackgroundTask(
 		context,
-		configs.elycodeConfig!.platformConfig!.updateContestInfoIntervalSecond * 1000,
+		configs.elycodeConfig!.updateContestInfoIntervalSecond * 1000,
 		async () => { return await cmd.updateQuestionsStatistics(); },
 		{
 			onSuccess: () => tree.getTree().sync(),

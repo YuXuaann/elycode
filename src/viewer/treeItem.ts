@@ -5,6 +5,7 @@ export enum ItemType {
     AddContest = 'AddContest',
     Contest = 'Contest',
     Question = 'Question',
+    QuestionCanBeDeleted = 'QuestionCanBeDeleted',
     Statistics = 'Statistics',
     ErrorMessage = 'errorMessage'
 }

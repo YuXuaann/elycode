@@ -1,4 +1,5 @@
 import * as consts from './consts';
+import * as meta from './contest/meta';
 import { Result, Ok } from "./utils";
 
 export enum LanguageType {
@@ -17,19 +18,19 @@ enum TemplateMode {
 }
 
 export class ElycodeConfig {
-    platformConfig?: PlatformConfig;
+    updateContestInfoIntervalSecond = 60;
+    platformConfig = new Map<meta.Platform, PlatformConfig>();
     compilerConfig?: CompilerConfig;
     runnerConfig?: RunnerConfig;
 }
 
 export class PlatformConfig {
-    codeforcesUserName?: string;
+    userName?: string;
     constructor(
-        codeforcesUserName: string,
-        public readonly updateContestInfoIntervalSecond: number,
+        userName: string,
     ) {
-        if (codeforcesUserName !== '') {
-            this.codeforcesUserName = codeforcesUserName;
+        if (userName !== '') {
+            this.userName = userName;
         }
     }
 }

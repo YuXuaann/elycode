@@ -51,7 +51,7 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                 const contest = this.contests.get(element.contestId!);
                 const question = contest?.questions.find((q) => (q.id === element.questionId!));
                 return new item.TreeItem(
-                    item.ItemType.Question,
+                    element.contestId === element.questionId ? item.ItemType.QuestionCanBeDeleted : item.ItemType.Question,
                     question?.name ?? 'Unknown Question',
                     vscode.TreeItemCollapsibleState.Collapsed,
                     undefined,
@@ -75,8 +75,8 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
                     commit.verdict,
                     vscode.TreeItemCollapsibleState.None,
                     contest.passed(commit) ? 'issue-closed' : 'stop',
-                    `time: ${commit.timeConsumedMillis}ms memory:${commit.memoryConsumedBytes}B at ${commit.timestamp}`,
-                    { command: consts.commands.openURL, title: 'Open submission', arguments: [commit.code] },
+                    questionDescription(commit.timeConsumedMillis, commit.memoryConsumedBytes, commit.timestamp),
+                    commit.code ? { command: consts.commands.openURL, title: 'Open submission', arguments: [commit.code] } : undefined,
                 );
             }
             case item.ItemType.ErrorMessage:
@@ -103,7 +103,11 @@ export class TreeView implements vscode.TreeDataProvider<item.Item> {
 
             const items: item.Item[] = [];
             this.contests!.forEach((contest, _) => {
-                items.push(new item.Item(item.ItemType.Contest, contest.meta.id));
+                if (contest.questions.length == 1) {
+                    items.push(new item.Item(item.ItemType.Question, contest.meta.id, contest.meta.id));
+                } else {
+                    items.push(new item.Item(item.ItemType.Contest, contest.meta.id));
+                }
             });
             if (items.length === 0) {
                 items.push(item.Item.AddContest);
@@ -183,4 +187,18 @@ export function deleteContest(contestId: string): void {
     tree.contests.delete(contest.meta.id);
     tree.notebooks.delete(contest.meta.id);
     tree.sync();
+}
+
+function questionDescription(timeConsumedMillis?: number, memoryConsumedBytes?: number, timestamp?: string): string {
+    let result = '';
+    if (timeConsumedMillis) {
+        result += `time: ${timeConsumedMillis}ms`;
+    }
+    if (memoryConsumedBytes) {
+        result += `memory: ${memoryConsumedBytes}B`;
+    }
+    if (timestamp) {
+        result += `at ${timestamp}`;
+    }
+    return result;
 }

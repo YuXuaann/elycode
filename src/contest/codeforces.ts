@@ -1,7 +1,7 @@
 import * as meta from './meta';
 import * as contest from './contest';
 import * as consts from '../consts';
-import * as jsdom from 'jsdom';
+import * as func from './func';
 import { Result, Ok, Err } from "../utils";
 
 export class Codeforces implements contest.Contest {
@@ -62,12 +62,12 @@ export class Codeforces implements contest.Contest {
                 if (error) {
                     console.warn(error);
                 }
-                const { samples, description, formatInput, formatOutput, hint } = getResultFromProblem(result);
+                const { samples, description, formatInput, formatOutput, hint } = func.getResultFromProblem(result);
                 const question = new meta.Question(
                     questionId,
                     title,
                     description,
-                    'normal',
+                    meta.QuestionType.normal,
                     samples,
                     new meta.Statistics(),
                     formatInput,
@@ -127,48 +127,20 @@ export class Codeforces implements contest.Contest {
 
         return Ok(commits);
     }
-}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getProblems(contestId: string, id: string): Promise<Result<any>> {
-    const response = await fetch(`${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`);
-    if (!response.ok) {
-        return Err(new Error(`Codeforces fetch problems Error with status: ${response.status}`));
+    getSubmitURL(contestId: string): string {
+        return `https://codeforces.com/contest/${contestId}/submit`;
     }
-
-    const html = await response.text();
-    const dom = new jsdom.JSDOM(html);
-    const samples = dom.window.document.querySelectorAll('script#lentille-context');
-    if (samples.length === 0) {
-        return Err(new Error(`Codeforces fetch problems Error with empty return`));
-    }
-
-    const context = JSON.parse(samples[0].textContent ?? '{}');
-    return Ok(context?.data?.problem ?? []);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getResultFromProblem(problem: any): { samples: meta.Sample[]; description: string; formatInput: string; formatOutput: string; hint: string; } {
-    const problemSamples: string[][] = problem!.samples ?? [];
-    const description: string = problem!.content?.description ?? '';
-    const formatInput: string = problem!.content?.formatI ?? '';
-    const formatOutput: string = problem!.content?.formatO ?? '';
-    const hint: string = problem!.content?.hint ?? '';
-    const samples = problemSamples.map((sample: string[]) => {
-        const [input = '', output = ''] = sample;
-        return new meta.Sample(input, output);
-    });
-    return { samples, description, formatInput, formatOutput, hint };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchProblemWithName(contestId: string, id: string, name: string): Promise<Result<any>> {
+async function fetchProblemWithName(contestId: string, id: string, name: string): Promise<Result<any>> {
     const numericContestId = Number(contestId);
     if (Number.isNaN(numericContestId)) {
         return Err(new Error(`Codeforces fetch problems Error with Invalid contestID: ${contestId}`));
     }
 
-    const { result: problem, error } = await getProblems(contestId, id);
+    const { result: problem, error } = await func.getProblem(meta.Platform.Codeforces, contestId, id);
     if (!error || name === '') {
         return Ok(problem);
     }
@@ -193,7 +165,7 @@ export async function fetchProblemWithName(contestId: string, id: string, name: 
             if (!problem.index || !problem.name) {
                 continue;
             }
-            const { result: luoguProblem, error } = await getProblems(contestId, problem.index);
+            const { result: luoguProblem, error } = await func.getProblem(meta.Platform.Codeforces, contestId, problem.index);
             if (error) {
                 continue;
             }

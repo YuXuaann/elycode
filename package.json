@@ -94,12 +94,12 @@
 			"view/item/context": [
 				{
 					"command": "elycode.deleteContest",
-					"when": "view == elycode.sidebarView && viewItem == Contest",
+					"when": "view == elycode.sidebarView && (viewItem == Contest || viewItem == QuestionCanBeDeleted)",
 					"group": "inline"
 				},
 				{
 					"command": "elycode.openSubmitPage",
-					"when": "view == elycode.sidebarView && viewItem == Question",
+					"when": "view == elycode.sidebarView && (viewItem == Question || viewItem == QuestionCanBeDeleted)",
 					"group": "inline"
 				}
 			]
@@ -190,8 +190,14 @@
 						"default": "",
 						"description": "Your Codeforces user name."
 					},
-					"elycode.platform.updateContestInfoInterval(seconds)": {
+					"elycode.platform.luogu.UserName": {
 						"order": 9,
+						"type": "string",
+						"default": "",
+						"description": "Your Luogu user name."
+					},
+					"elycode.platform.updateContestInfoInterval(seconds)": {
+						"order": 10,
 						"type": "number",
 						"default": 60,
 						"markdownDescription": "Interval (in seconds) for Elycode to auto refresh contest statistics."

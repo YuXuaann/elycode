@@ -5,6 +5,7 @@ import * as contest from './contest';
 import * as meta from './meta';
 import { Result, Err, Ok } from "../utils";
 import * as vscode from 'vscode';
+import * as jsdom from 'jsdom';
 
 export async function loadFromURL(rawURL: string): Promise<Result<contest.Contest>> {
     const normalized = rawURL.trim();
@@ -54,4 +55,56 @@ export function saveToLocal(contest: meta.Record) {
     const filePath = path.join(consts.elycodeDir, consts.CONTEST_RECORD);
     fs.mkdirSync(consts.elycodeDir, { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(contest, null, 4), 'utf-8');
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getHtmlData(response: Response): Promise<Result<any>> {
+    const html = await response.text();
+    const dom = new jsdom.JSDOM(html);
+    const samples = dom.window.document.querySelectorAll('script#lentille-context');
+    if (samples.length === 0) {
+        return Err(new Error(`with empty return`));
+    }
+
+    const context = JSON.parse(samples[0].textContent ?? '{}');
+    return Ok(context?.data);
+}
+
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getProblem(platform: meta.Platform, contestId: string, id: string): Promise<Result<any>> {
+    let responseURL: string;
+    switch (platform) {
+        case meta.Platform.Codeforces:
+            responseURL = `${consts.CONTEST_PROBLEMS_API_BASE}/CF${contestId}${id}`;
+            break;
+        default:
+        case meta.Platform.Luogu:
+            responseURL = `${consts.CONTEST_PROBLEMS_API_BASE}/${id}`;
+    }
+    const response = await fetch(responseURL);
+    if (!response.ok) {
+        return Err(new Error(`${platform} fetch problems Error with status: ${response.status}`));
+    }
+
+    const { result: data, error } = await getHtmlData(response);
+    if (error) {
+        return Err(new Error(`${platform} fetch problems Error: ${error.message}`));
+    }
+
+    return Ok(data?.problem ?? []);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getResultFromProblem(problem: any): { samples: meta.Sample[]; description: string; formatInput: string; formatOutput: string; hint: string; } {
+    const problemSamples: string[][] = problem!.samples ?? [];
+    const description: string = problem!.content?.description ?? '';
+    const formatInput: string = problem!.content?.formatI ?? '';
+    const formatOutput: string = problem!.content?.formatO ?? '';
+    const hint: string = problem!.content?.hint ?? '';
+    const samples = problemSamples.map((sample: string[]) => {
+        const [input = '', output = ''] = sample;
+        return new meta.Sample(input, output);
+    });
+    return { samples, description, formatInput, formatOutput, hint };
 }
