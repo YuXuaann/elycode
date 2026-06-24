@@ -11,7 +11,6 @@ export enum configs {
     compileExtraParams = 'compiler.extraParams',
     runningTimeLimit = 'running.timeLimit(seconds)',
     runningMemoryLimit = 'running.memoryLimit(MB)',
-    temporaryPath = 'running.temporaryPath',
     templateMode = 'code.templateMode',
     customTemplate = 'code.customTemplate',
     codeforcesUserName = 'platform.codeforces.UserName',

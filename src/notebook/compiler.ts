@@ -195,7 +195,7 @@ export class Compiler {
 
     async compileToTemp(codePath: string): Promise<Result<string>> {
         const cfg = this.config;
-        const tempDir = fs.mkdtempSync(path.join(cfg.tempDir, 'elycode-run-'));
+        const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'elycode-run-'));
         const executablePath = path.join(tempDir, "elycode.out");
         const { result: compilerPath, error } = await this.getCompilerPath();
         if (error) {

@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as consts from './consts';
 import { Result, Ok } from "./utils";
 
@@ -40,7 +39,6 @@ export class CompilerConfig {
     constructor(
         public readonly languageType: LanguageType,
         public readonly compilerPath: string,
-        public readonly tempDir: string,
         extraParams: string,
     ) {
         const parsedParams = extraParams
@@ -65,19 +63,17 @@ export class CompilerConfig {
         this.extraParams = mergedParams;
     }
 
-    static async new(
+    static new(
         compilerDetectMode: string,
         compilerCustomPath: string,
-        tempDir: string,
         extraParams: string,
-    ): Promise<Result<CompilerConfig>> {
-        await fs.promises.mkdir(tempDir, { recursive: true });
+    ): Result<CompilerConfig> {
         switch (compilerDetectMode) {
             case CompilerDetectMode.customGCC:
-                return Ok(new CompilerConfig(LanguageType.C, compilerCustomPath, tempDir, extraParams));
+                return Ok(new CompilerConfig(LanguageType.C, compilerCustomPath, extraParams));
             case CompilerDetectMode.autoGCC:
             default:
-                return Ok(new CompilerConfig(LanguageType.C, CompilerDetectMode.autoGCC, tempDir, extraParams));
+                return Ok(new CompilerConfig(LanguageType.C, CompilerDetectMode.autoGCC, extraParams));
         }
     }
 }

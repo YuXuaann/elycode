@@ -150,7 +150,7 @@ export function getTree(): TreeView {
 export function getContest(contestId: string): Result<contest.Contest> {
     const contest = tree.contests.get(contestId);
     if (!contest) {
-        return Err(new Error("Contest doesn't exist"));
+        return Err(new Error("Elycode is not loaded yet or contest doesn't exist. Please retry later."));
     }
     return Ok(contest);
 }
@@ -158,7 +158,7 @@ export function getContest(contestId: string): Result<contest.Contest> {
 export function getNotebook(contestId: string): Result<notebook.Notebook> {
     const notebook = tree.notebooks.get(contestId);
     if (!notebook) {
-        return Err(new Error("Contest doesn't exist"));
+        return Err(new Error("Elycode is not loaded yet or contest doesn't exist. Please retry later."));
     }
     return Ok(notebook);
 }

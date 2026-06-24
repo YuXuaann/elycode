@@ -168,14 +168,8 @@
 						"default": 256,
 						"description": "Maximum memory usage per submission."
 					},
-					"elycode.running.temporaryPath": {
-						"order": 6,
-						"type": "string",
-						"default": "/tmp/elycode",
-						"description": "Directory used to store temporary build artifacts."
-					},
 					"elycode.code.templateMode": {
-						"order": 7,
+						"order": 6,
 						"type": "string",
 						"enum": [
 							"auto",
@@ -185,19 +179,19 @@
 						"description": "Choose how new *.cpp files are initialized."
 					},
 					"elycode.code.customTemplate": {
-						"order": 8,
+						"order": 7,
 						"type": "string",
 						"default": "",
 						"markdownDescription": "Used only when `elycode.templateMode` is `custom`."
 					},
 					"elycode.platform.codeforces.UserName": {
-						"order": 9,
+						"order": 8,
 						"type": "string",
 						"default": "",
 						"description": "Your Codeforces user name."
 					},
 					"elycode.platform.updateContestInfoInterval(seconds)": {
-						"order": 10,
+						"order": 9,
 						"type": "number",
 						"default": 60,
 						"markdownDescription": "Interval (in seconds) for Elycode to auto refresh contest statistics."

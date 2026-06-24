@@ -8,12 +8,11 @@ import * as configs from './configs';
 import * as utils from './utils';
 import * as treeItem from './viewer/treeItem';
 
-async function config() {
+function config() {
 	const config = vscode.workspace.getConfiguration('elycode');
 	const compilerDetectMode = config.get<string>(consts.configs.compilerDetectMode, '');
 	const compilerCustomPath = config.get<string>(consts.configs.compilerCustomPath, '');
 	const compileExtraParams = config.get<string>(consts.configs.compileExtraParams, '');
-	const temporaryPath = config.get<string>(consts.configs.temporaryPath, '');
 	const runningTimeLimit = config.get<number>(consts.configs.runningTimeLimit, 2);
 	const runningMemoryLimit = config.get<number>(consts.configs.runningMemoryLimit, 256);
 	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
@@ -21,7 +20,7 @@ async function config() {
 	const codeforcesUserName = config.get<string>(consts.configs.codeforcesUserName, '');
 	const updateContestInfoIntervalSecond = config.get<number>(consts.configs.updateContestInfoIntervalSecond, 60);
 
-	const { result, error } = await configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, temporaryPath, compileExtraParams);
+	const { result, error } = configs.CompilerConfig.new(compilerDetectMode, compilerCustomPath, compileExtraParams);
 	if (error) {
 		utils.vsPrint(error.message);
 		vscode.window.showErrorMessage(`Failed to load compiler config: ${error.message ?? error}.`);
@@ -60,7 +59,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 export async function activate(context: vscode.ExtensionContext) {
 	utils.vsPrint('elycode is now active!');
 
-	await config();
+	config();
 	registerCommands();
 
 	const components = [];
