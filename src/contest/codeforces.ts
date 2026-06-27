@@ -98,7 +98,7 @@ export class Codeforces implements contest.Contest {
 
                 const commit = new meta.Commit();
                 if (creationTimeSeconds) {
-                    commit.timestamp = new Date(creationTimeSeconds).toUTCString();
+                    commit.timestamp = new Date(Number(creationTimeSeconds) * 1000).toUTCString();
                 }
                 if (verdict) {
                     commit.verdict = verdict;
