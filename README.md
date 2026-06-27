@@ -1,5 +1,16 @@
 # elycode
 
+<p align="center">
+  <img src="./media/icon.png" alt="elycode" width="240">
+</p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=yuxuaan.elycode">
+    <img src="https://img.shields.io/visual-studio-marketplace/v/yuxuaan.elycode?label=VS%20Marketplace" alt="VS Code Marketplace">
+  </a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
+</p>
+
 `elycode` is a one-stop VS Code extension for competitive programming practice. It enables code management, testing, and submission in a single workflow.
 
 ## Key Features
@@ -8,7 +19,7 @@
 - **Test**: Support **sample testing** and comparison with sample answers, and add custom test cases
 - **Submit**: Support jumping to the problem submission website and viewing historical submission records
 - **Display**: Present problem information, samples, contests, and submission statistics clearly in the sidebar
-- **Code**: Automatically generate corresponding C++ source files (`.cpp`), auto-detect GCC, and support automatic GCC download/configuration on Windows
+- **Code**: Automatically generate corresponding C++ source files (`.cpp`), auto-detect GCC, and support automatic GCC download/configuration on Windows (more programming languages will be supported in future releases)
 - **Theme**: Support VS Code light and dark themes
 
 ## Quick Start
@@ -50,6 +61,16 @@
 - [ ] AtCoder
 - [ ] Other common contest platforms
 
+## Supported Code Languages
+
+- [x] C/Cpp
+- [ ] Java
+- [ ] Rust
+- [ ] Python
+- [ ] Go
+- [ ] JavaScript
+
+
 
 ## Configuration
 
@@ -81,6 +102,11 @@ npm run watch
 
 Since the VS Code extension development environment is configured, you can also test and develop the extension in the integrated development environment through the VS Code launch configuration.
 
+## Todo List
+
+- Support more platform and code languages
+- Fix error when quickly switching problems
+
 ## License
 
 MIT License
@@ -89,4 +115,4 @@ MIT License
 
 This extension was developed by an individual in their spare time. It may still contain various issues or bugs, and feedback as well as pull requests are warmly welcome.
 
-Wishing everyone great success in their ACM or OI journey.
+⭐ Wishing everyone great success in their ACM or OI journey. ⭐
