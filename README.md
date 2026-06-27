@@ -1,12 +1,16 @@
 # elycode
 
 <p align="center">
+  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
   <img src="./media/icon.png" alt="elycode" width="240">
 </p>
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=yuxuaan.elycode">
-    <img src="https://img.shields.io/visual-studio-marketplace/v/yuxuaan.elycode?label=VS%20Marketplace" alt="VS Code Marketplace">
+    <img src="https://img.shields.io/badge/VS%20Marketplace-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Marketplace">
   </a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"></a>
 </p>
@@ -45,7 +49,7 @@
 
     ![alt text](./media/readme/running.png)
 
-6. Optional: If you want to display related data such as submission history, you should configure the usernames for the corresponding platforms. See the [Configuration](#configuration) section for [`elycode.platform.codeforces.UserName`](#elycode.platform.codeforces.UserName) and [`elycode.platform.luogu.UserName`](#elycode.platform.luogu.Username). `elycode` will also update the data every [`elycode.platform.updateContestInfoInterval(seconds)`](#elycode.platform.updateContestInfoInterval(seconds)) seconds, and you can manually refresh it by using the button.
+6. Optional: If you want to display related data such as submission history, you should configure the usernames for the corresponding platforms. See the [Configuration](#configuration) section for `elycode.platform.codeforces.UserName` and `elycode.platform.luogu.UserName`. `elycode` will also update the data every `elycode.platform.updateContestInfoInterval(seconds)` seconds, and you can manually refresh it by using the button.
 
     ![alt text](./media/readme/refresh.png)
 
