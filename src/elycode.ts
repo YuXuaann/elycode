@@ -9,7 +9,7 @@ import * as utils from './utils';
 import * as meta from './contest/meta';
 import * as treeItem from './viewer/treeItem';
 
-function config() {
+async function config() {
 	const config = vscode.workspace.getConfiguration('elycode');
 	const compilerDetectMode = config.get<string>(consts.configs.compilerDetectMode, '');
 	const compilerCustomPath = config.get<string>(consts.configs.compilerCustomPath, '');
@@ -18,6 +18,7 @@ function config() {
 	const runningMemoryLimit = config.get<number>(consts.configs.runningMemoryLimit, 256);
 	const templateMode = config.get<string>(consts.configs.templateMode, "auto");
 	const customTemplate = config.get<string>(consts.configs.customTemplate, '');
+	const customTemplateFile = config.get<string>(consts.configs.customTemplateFile, '');
 	const codeforcesUserName = config.get<string>(consts.configs.codeforcesUserName, '');
 	const luoguUserName = config.get<string>(consts.configs.luoguUserName, '');
 	const updateContestInfoIntervalSecond = config.get<number>(consts.configs.updateContestInfoIntervalSecond, 60);
@@ -36,7 +37,7 @@ function config() {
 	} else {
 		configs.elycodeConfig.compilerConfig = result!;
 	}
-	configs.elycodeConfig.runnerConfig = new configs.RunnerConfig(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate);
+	configs.elycodeConfig.runnerConfig = await configs.RunnerConfig.create(runningTimeLimit, runningMemoryLimit, templateMode, customTemplate, customTemplateFile);
 }
 
 function registerCommands() {
@@ -67,7 +68,7 @@ function startBackgroundTasks(context: vscode.ExtensionContext) {
 export async function activate(context: vscode.ExtensionContext) {
 	utils.vsPrint('elycode is now active!');
 
-	config();
+	await config();
 	registerCommands();
 
 	const components = [];

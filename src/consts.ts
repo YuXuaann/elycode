@@ -13,6 +13,7 @@ export enum configs {
     runningMemoryLimit = 'running.memoryLimit(MB)',
     templateMode = 'code.templateMode',
     customTemplate = 'code.customTemplate',
+    customTemplateFile = 'code.customTemplateFile',
     codeforcesUserName = 'platform.codeforces.UserName',
     luoguUserName = 'platform.luogu.UserName',
     updateContestInfoIntervalSecond = 'platform.updateContestInfoInterval(seconds)'
