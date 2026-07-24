@@ -180,26 +180,32 @@
 						"default": "auto",
 						"description": "Choose how new *.cpp files are initialized."
 					},
-					"elycode.code.customTemplate": {
+					"elycode.code.customTemplateFile": {
 						"order": 7,
 						"type": "string",
 						"default": "",
-						"markdownDescription": "Used only when `elycode.templateMode` is `custom`."
+						"markdownDescription": "Path to a custom template file. Used only when `elycode.code.templateMode` is set to `custom`. This takes priority over inline custom template content."
+					},
+					"elycode.code.customTemplate": {
+						"order": 8,
+						"type": "string",
+						"default": "",
+						"markdownDescription": "Inline custom template content. Used only when `elycode.code.templateMode` is set to `custom`. If `elycode.code.customTemplateFile` is specified, the file template takes priority."
 					},
 					"elycode.platform.codeforces.UserName": {
-						"order": 8,
+						"order": 9,
 						"type": "string",
 						"default": "",
 						"description": "Your Codeforces user name."
 					},
 					"elycode.platform.luogu.UserName": {
-						"order": 9,
+						"order": 10,
 						"type": "string",
 						"default": "",
 						"description": "Your Luogu user name."
 					},
 					"elycode.platform.updateContestInfoInterval(seconds)": {
-						"order": 10,
+						"order": 11,
 						"type": "number",
 						"default": 60,
 						"markdownDescription": "Interval (in seconds) for Elycode to auto refresh contest statistics."
